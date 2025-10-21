@@ -43,7 +43,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_stop: true
           script: |
-            echo "${{ secrets.ENV_FILE }}" > /root/rng-404/.env
+            echo "${{ vars.ENV_FILE }}" > /root/rng-404/.env
             echo ".env uploaded to server"
 
       - name: Copy docker-compose file to server
