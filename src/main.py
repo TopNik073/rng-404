@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(
     _app: FastAPI,
-) -> AsyncGenerator[None, None]:  # noqa: ARG001
+) -> AsyncGenerator[None]:
     base_url: str = f"http://{env_config.APP_HOST}:{env_config.APP_PORT}"
     logger.info(f"App started on {base_url}")
     logger.info(f"See Swagger for mode info: {base_url}/docs")

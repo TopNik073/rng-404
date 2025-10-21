@@ -68,7 +68,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             return response_size
 
     @staticmethod
-    async def create_final_log(
+    async def create_final_log( # noqa: PLR0913
         msg: Literal["successful", "failed"],
         request: Request,
         context: dict,

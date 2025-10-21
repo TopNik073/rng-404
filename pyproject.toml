@@ -19,6 +19,9 @@ exclude = [
   ".venv",
 ]
 format.quote-style = "single"
+lint.exclude = [
+  "PLR0913",
+]
 lint.select = [
   "F", # Pyflakes
   # "E/W", # pycodestyle
@@ -47,7 +50,7 @@ lint.select = [
   # "FA", # flake8-future-annotations
   "ISC", # flake8-implicit-str-concat
   # "ICN", # flake8-import-conventions
-  "G", # flake8-logging-format
+#  "G", # flake8-logging-format
   "INP", # flake8-no-pep420
   # "PIE", # flake8-pie
   "T20", # flake8-print
