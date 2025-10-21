@@ -1,0 +1,19 @@
+services:
+  app:
+    image: ghcr.io/topnik073/rng-404:latest
+    container_name: rng-back
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - LOG_FILE=/app/logs/app.log
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app_dir/logs
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
