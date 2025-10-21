@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from src.core.config import env_config
 from src.core.logger import get_logger
+from src.presentation.api import api_router
 from src.presentation.middlewares.logging import RequestLoggingMiddleware
 
 logger = get_logger(__name__)
@@ -21,6 +22,8 @@ async def lifespan(
 
 app = FastAPI(title=env_config.APP_NAME, debug=env_config.DEBUG, lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
+
+app.include_router(api_router)
 
 @app.get("/health")
 async def health():
