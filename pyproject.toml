@@ -8,6 +8,7 @@ dependencies = [
     "fastapi>=0.119.1",
     "httpx>=0.28.1",
     "pydantic-settings>=2.11.0",
+    "python-multipart>=0.0.20",
     "redis>=6.4.0",
     "ruff>=0.14.1",
     "structlog>=25.4.0",
