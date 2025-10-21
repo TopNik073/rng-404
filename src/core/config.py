@@ -4,11 +4,28 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class EnvConfig(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    # ----- APP ENV CONFIG -----
     APP_NAME: str = 'RNG-404'
     APP_HOST: str
     APP_PORT: int
 
     DEBUG: bool = False
+
+    # ----- REDIS -----
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_PASS: str | None = None
+    REDIS_DB: int
+
+    @property
+    def REDIS_URL(self) -> str:
+        if self.REDIS_PASS:
+            redis_url = f'redis://:{self.REDIS_PASS}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}'
+        else:
+            redis_url = f'redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}'
+
+        return redis_url
 
     # ----- LOGGER -----
     SENSITIVE_DATA: list[str] = []
@@ -28,5 +45,11 @@ class EnvConfig(BaseSettings):
         Path.mkdir(self._LOGS_DIR, parents=True, exist_ok=True)
         return self._LOGS_DIR
 
+class AppConfig(BaseSettings):
+    # ----- LOCUSONUS API -----
+    LOCUSONUS_API_URL: str = 'https://locusonus.org'
+    LOCUSONUS_API_TIMEOUT: float = 10.0
+    LOCUSONUS_API_TTL: int = 300
 
 env_config = EnvConfig()
+app_config = AppConfig()
