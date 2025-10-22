@@ -16,6 +16,8 @@ from src.presentation.api.v1.rng.models import GenerateRequestSchema
 SYMBOL_RATE: Final[int] = 48_000
 EXC_DURATION: Final[float] = 1.0
 LSB_BITS: Final[int] = 8
+MIN_BASE: Final[int] = 2
+MAX_BASE: Final[int] = 36
 
 class RNG:
     def __init__(self, source_getter: LocusonusClient) -> None:
@@ -43,14 +45,14 @@ class RNG:
         )
 
     def check_params(self, params: GenerateRequestSchema):
-        if params.base < 2 or params.base > 36:
+        if params.base < MIN_BASE or params.base > MAX_BASE:
             raise HTTPException(400, "base must be between 2 and 36")
 
         try:
             from_int = int(params.from_num, params.base)
             to_int = int(params.to_num, params.base)
         except ValueError as e:
-            raise HTTPException(400, f"Не удалось распарсить from/to в основании {params.base}: {e!s}")
+            raise HTTPException(400, f"Не удалось распарсить from/to в основании {params.base}: {e!s}") from e  # noqa
 
         if from_int > to_int:
             raise HTTPException(400, "from_num должно быть <= to_num")
@@ -117,10 +119,7 @@ class RNG:
 
         range_size = to_int - from_int + 1
 
-        if to_int == 0:
-            digits_needed = 1
-        else:
-            digits_needed = math.ceil(math.log(to_int + 1, base))
+        digits_needed = 1 if to_int == 0 else math.ceil(math.log(to_int + 1, base))
 
         chunk_digits = max(digits_needed, 4)
 
