@@ -2,8 +2,9 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from src.core.config import env_config
+from src.core.config import env_config, app_config
 from src.core.logger import get_logger
 from src.presentation.api import api_router
 from src.presentation.middlewares.logging import RequestLoggingMiddleware
@@ -24,6 +25,13 @@ async def lifespan(
 
 app = FastAPI(title=env_config.APP_NAME, debug=env_config.DEBUG, lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=app_config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(api_router)
 

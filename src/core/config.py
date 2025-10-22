@@ -46,6 +46,12 @@ class EnvConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
+    CORS_ORIGINS: list[str] = [
+        'http://localhost:5173',
+        'http://62.217.177.201',
+        'https://404-team.ru',
+    ]
+
     # ----- LOCUSONUS API -----
     LOCUSONUS_API_URL: str = 'https://locusonus.org'
     LOCUSONUS_API_TIMEOUT: float = 10.0
