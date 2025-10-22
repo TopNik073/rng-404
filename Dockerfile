@@ -7,7 +7,7 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_NO_CACHE_DIR=1 \
     PYTHONPATH=/app_dir/src
 RUN apt-get update && \
-    apt-get install --yes --no-install-recommends && \
+    apt-get install --yes --no-install-recommends ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /app_dir
 
