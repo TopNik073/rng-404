@@ -60,7 +60,10 @@ class RNG:
         if from_int > to_int:
             raise HTTPException(400, 'from_num должно быть <= to_num')
 
-        range_size = to_int - from_int + 1
+        if not params.uniq_only:
+            return
+
+        range_size = to_int - from_int
         if params.count > range_size:
             raise HTTPException(400, 'count больше размера диапазона (кол-во уникальных значений невозможно)')
 
