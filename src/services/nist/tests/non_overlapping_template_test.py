@@ -22,7 +22,7 @@ class NonOverlappingTemplateTest:
         """
         self.template_length = template_length
         self.significance_level = significance_level
-        self.name = "Non-overlapping Template Test"
+        self.name = 'Non-overlapping Template Test'
 
         # Number of templates for each length m
         self.num_templates = {
@@ -57,25 +57,23 @@ class NonOverlappingTemplateTest:
         # M (block length) will be calculated based on sequence length
         # Recommended M ≈ 1032 for million-bit sequence with m = 9
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _read_templates(self, templates_dir: str) -> list[np.ndarray]:
         """Read templates from template files"""
-        template_file = Path(templates_dir) / f"template{self.template_length}"
+        template_file = Path(templates_dir) / f'template{self.template_length}'
 
         if not Path.exists(Path(template_file)):
-            raise FileNotFoundError(f"Template file not found: {template_file}")
+            raise FileNotFoundError(f'Template file not found: {template_file}')
 
         # Read all lines and process them
         templates = []
@@ -163,7 +161,7 @@ class NonOverlappingTemplateTest:
     ) -> dict:
         if templates_dir is None:
             # Use absolute path to templates directory
-            templates_dir = Path(__file__).parent / "templates"
+            templates_dir = Path(__file__).parent / 'templates'
         """
         Run the Non-overlapping Template Test
 
@@ -191,9 +189,9 @@ class NonOverlappingTemplateTest:
         N = n // M  # This is B in NIST paper
         if N < self.B:
             return {
-                "success": False,
-                "error": f"Sequence too short. Need at least {self.B * M} bits.",
-                "statistics": {"n": n, "template_length": self.template_length},
+                'success': False,
+                'error': f'Sequence too short. Need at least {self.B * M} bits.',
+                'statistics': {'n': n, 'template_length': self.template_length},
             }
 
         # Read templates
@@ -201,9 +199,9 @@ class NonOverlappingTemplateTest:
             templates = self._read_templates(templates_dir)
         except FileNotFoundError as e:
             return {
-                "success": False,
-                "error": str(e),
-                "statistics": {"n": n, "template_length": self.template_length},
+                'success': False,
+                'error': str(e),
+                'statistics': {'n': n, 'template_length': self.template_length},
             }
 
         # Compute test parameters
@@ -216,9 +214,9 @@ class NonOverlappingTemplateTest:
 
         if mu <= 0:
             return {
-                "success": False,
-                "error": f"Expected value (λ={mu}) must be positive",
-                "statistics": {"n": n, "lambda": mu, "M": M, "N": N, "B": self.B},
+                'success': False,
+                'error': f'Expected value (λ={mu}) must be positive',
+                'statistics': {'n': n, 'lambda': mu, 'M': M, 'N': N, 'B': self.B},
             }
 
         # Process templates in chunks for better performance
@@ -246,106 +244,97 @@ class NonOverlappingTemplateTest:
                 p_value = gammaincc(N / 2.0, chi_squared / 2.0)  # Store results
                 results.append(
                     {
-                        "template": template.tolist(),
-                        "template_idx": template_idx,
-                        "W": W.tolist(),
-                        "chi_squared": chi_squared,
-                        "p_value": float(p_value),
-                        "success": bool(p_value >= self.significance_level),
+                        'template': template.tolist(),
+                        'template_idx': template_idx,
+                        'W': W.tolist(),
+                        'chi_squared': chi_squared,
+                        'p_value': float(p_value),
+                        'success': bool(p_value >= self.significance_level),
                     }
                 )
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "M": M,
-            "N": N,  # Number of blocks actually used
-            "B": self.B,  # Target number of blocks
-            "lambda": mu,  # Expected value (λ)
-            "variance": sigma2,  # Variance (σ²)
-            "template_length": self.template_length,
-            "templates_tested": len(templates),
+            'n': n,
+            'M': M,
+            'N': N,  # Number of blocks actually used
+            'B': self.B,  # Target number of blocks
+            'lambda': mu,  # Expected value (λ)
+            'variance': sigma2,  # Variance (σ²)
+            'template_length': self.template_length,
+            'templates_tested': len(templates),
         }
 
         return {
-            "success": all(r["success"] for r in results),
-            "results": results,
-            "statistics": stats,
+            'success': all(r['success'] for r in results),
+            'results': results,
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path, templates_dir: str | None = None) -> dict:
         """Run the Non-overlapping Template Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data, templates_dir)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
-        return (
-            "\nNON-OVERLAPPING TEMPLATE TEST\n"
-            + "-" * 45
-            + "\n"
-            + f"ERROR: {test_results['error']}\n"
-        )
+    if 'error' in test_results:
+        return '\nNON-OVERLAPPING TEMPLATE TEST\n' + '-' * 45 + '\n' + f'ERROR: {test_results["error"]}\n'
 
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
     report = [
-        "\nNON-OVERLAPPING TEMPLATE TEST",
-        "-" * 75,
-        "COMPUTATIONAL INFORMATION:",
-        "-" * 75,
-        f"LAMBDA = {stats['lambda']:.6f}",
-        f"M (block length) = {stats['M']}",
-        f"N (number of blocks) = {stats['N']}",
-        f"m (template length) = {stats['template_length']}",
-        f"n (sequence length) = {stats['n']}",
-        "-" * 75,
-        "                F R E Q U E N C Y",
-        "Template  W_1  W_2  W_3  W_4  W_5  W_6  W_7  W_8    Chi^2   P-value Result  Index",
+        '\nNON-OVERLAPPING TEMPLATE TEST',
+        '-' * 75,
+        'COMPUTATIONAL INFORMATION:',
+        '-' * 75,
+        f'LAMBDA = {stats["lambda"]:.6f}',
+        f'M (block length) = {stats["M"]}',
+        f'N (number of blocks) = {stats["N"]}',
+        f'm (template length) = {stats["template_length"]}',
+        f'n (sequence length) = {stats["n"]}',
+        '-' * 75,
+        '                F R E Q U E N C Y',
+        'Template  W_1  W_2  W_3  W_4  W_5  W_6  W_7  W_8    Chi^2   P-value Result  Index',
     ]
 
-    for result in test_results["results"]:
-        template_str = "".join(map(str, result["template"]))
-        W_str = " ".join(f"{w:3d}" for w in result["W"])
-        status = "SUCCESS" if result["success"] else "FAILURE"
+    for result in test_results['results']:
+        template_str = ''.join(map(str, result['template']))
+        W_str = ' '.join(f'{w:3d}' for w in result['W'])
+        status = 'SUCCESS' if result['success'] else 'FAILURE'
 
         report.append(
-            f"{template_str} {W_str}  {result['chi_squared']:7.4f} {result['p_value']:.6f} {status:7} {result['template_idx']:4d}"
+            f'{template_str} {W_str}  {result["chi_squared"]:7.4f} {result["p_value"]:.6f} {status:7} {result["template_idx"]:4d}'
         )
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Non-overlapping Template Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
+    parser = argparse.ArgumentParser(description='NIST Non-overlapping Template Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
     parser.add_argument(
-        "--template-length",
+        '--template-length',
         type=int,
         default=9,
-        help="Length of templates to test (2-21, default: 9)",
+        help='Length of templates to test (2-21, default: 9)',
     )
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
     parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
-    parser.add_argument(
-        "--templates-dir",
+        '--templates-dir',
         type=str,
-        default="templates",
-        help="Directory containing template files",
+        default='templates',
+        help='Directory containing template files',
     )
 
     args = parser.parse_args()
 
     # Run test
-    test = NonOverlappingTemplateTest(
-        template_length=args.template_length, significance_level=args.alpha
-    )
+    test = NonOverlappingTemplateTest(template_length=args.template_length, significance_level=args.alpha)
     results = test.test_file(args.file, args.templates_dir)
 
     # Print report

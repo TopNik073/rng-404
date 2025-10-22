@@ -35,26 +35,24 @@ class NistService:
         self.sequence: list[int] | str | bytes | None = None
 
         self.tests = {
-            "frequency": FrequencyTest(),
-            "block_frequency": BlockFrequencyTest(block_size=BLOCK_SIZE),
-            "runs": RunsTest(),
-            "longest_runs": LongestRunsTest(),
-            "matrix_rank": BinaryMatrixRankTest(),
-            "dft": DiscreteFourierTransformTest(),
-            "template": NonOverlappingTemplateTest(),
-            "overlapping_template": OverlappingTemplateTest(),
-            "universal": UniversalTest(),
-            "linear_complexity": LinearComplexityTest(),
-            "serial": SerialTest(),
-            "approximate_entropy": ApproximateEntropyTest(),
-            "cumulative_sums": CumulativeSumsTest(),
-            "random_excursions": RandomExcursionsTest(),
-            "random_excursions_variant": RandomExcursionsVariantTest(),
+            'frequency': FrequencyTest(),
+            'block_frequency': BlockFrequencyTest(block_size=BLOCK_SIZE),
+            'runs': RunsTest(),
+            'longest_runs': LongestRunsTest(),
+            'matrix_rank': BinaryMatrixRankTest(),
+            'dft': DiscreteFourierTransformTest(),
+            'template': NonOverlappingTemplateTest(),
+            'overlapping_template': OverlappingTemplateTest(),
+            'universal': UniversalTest(),
+            'linear_complexity': LinearComplexityTest(),
+            'serial': SerialTest(),
+            'approximate_entropy': ApproximateEntropyTest(),
+            'cumulative_sums': CumulativeSumsTest(),
+            'random_excursions': RandomExcursionsTest(),
+            'random_excursions_variant': RandomExcursionsVariantTest(),
         }
 
-    async def check(
-        self, params: NistRequestSchema, upload_file: UploadFile | None
-    ) -> dict:
+    async def check(self, params: NistRequestSchema, upload_file: UploadFile | None) -> dict:
         sequence = params.sequence
 
         included_tests = params.included_tests
@@ -63,21 +61,21 @@ class NistService:
             self.tests.pop(test_name)
 
         if sequence is None and upload_file is None:
-            raise HTTPException(400, "No sequence or file uploaded")
+            raise HTTPException(400, 'No sequence or file uploaded')
 
         if upload_file is not None:
             file_sequence = await upload_file.read()
             if not file_sequence and not sequence:
-                raise HTTPException(400, "No sequence or file uploaded")
+                raise HTTPException(400, 'No sequence or file uploaded')
             sequence = file_sequence
 
         results = {}
 
         for test_name, test in self.tests.items():
             test_results = test.test(sequence)
-            if "error" in test_results:
-                logger.debug(f"Error: {test_results['error']}")
-                test_results["success"] = False
+            if 'error' in test_results:
+                logger.debug(f'Error: {test_results["error"]}')
+                test_results['success'] = False
 
             results[test_name] = test_results
 
@@ -110,9 +108,7 @@ class NistService:
         if isinstance(obj, np.ndarray):
             return [self._make_json_serializable(item) for item in obj.tolist()]
         if isinstance(obj, Mapping):
-            return {
-                key: self._make_json_serializable(value) for key, value in obj.items()
-            }
+            return {key: self._make_json_serializable(value) for key, value in obj.items()}
         if isinstance(obj, (list, tuple)):
             return [self._make_json_serializable(item) for item in obj]
         if obj is None or isinstance(obj, (str, int, float, bool)):

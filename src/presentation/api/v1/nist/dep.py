@@ -5,8 +5,6 @@ from fastapi import Depends
 from src.services.nist.service import NistService
 
 
-
-
 async def get_nist_service() -> NistService:
     return NistService()
 

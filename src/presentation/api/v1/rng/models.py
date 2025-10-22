@@ -14,13 +14,14 @@ class GenerateRequestSchema(BaseModel):
     uniq_only: bool = True
     format: Literal['json', 'txt'] = 'json'
 
+
 async def parse_generate_params(  # noqa
-        from_num: str = Form(...),
-        to_num: str = Form(...),
-        count: int = Form(5),
-        base: int = Form(10),
-        uniq_only: bool = Form(True),
-        format: Literal['json', 'txt'] = Form('json'),
+    from_num: str = Form(...),
+    to_num: str = Form(...),
+    count: int = Form(5),
+    base: int = Form(10),
+    uniq_only: bool = Form(True),
+    format: Literal['json', 'txt'] = Form('json'),
 ):
     return GenerateRequestSchema(
         from_num=from_num,
@@ -31,7 +32,9 @@ async def parse_generate_params(  # noqa
         format=format,
     )
 
+
 GEN_REQ_SCHEMA = Annotated[GenerateRequestSchema, Depends(parse_generate_params)]
+
 
 class GeneratorResponseSchema(BaseModel):
     executed_sources: list[LocusonusResponseModel]

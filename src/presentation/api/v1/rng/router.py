@@ -9,8 +9,8 @@ rng_router = APIRouter(prefix='/rng', tags=['RNG'])
 
 @rng_router.post('/generate', response_model=GeneratorResponseSchema)
 async def rng_generator(
-        rng_service: RNG_SERVICE_DEP,
-        params: GEN_REQ_SCHEMA,
-        file: UploadFile | None = File(default=None),  # noqa
+    rng_service: RNG_SERVICE_DEP,
+    params: GEN_REQ_SCHEMA,
+    file: UploadFile | None = File(default=None),  # noqa
 ) -> GeneratorResponseSchema | StreamingResponse | Response:
     return await rng_service.generate(params=params, upload_file=file)

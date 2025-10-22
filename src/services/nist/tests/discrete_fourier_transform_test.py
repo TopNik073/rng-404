@@ -23,11 +23,9 @@ class DiscreteFourierTransformTest:
             significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
-        self.name = "Discrete Fourier Transform (Spectral) Test"
+        self.name = 'Discrete Fourier Transform (Spectral) Test'
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """
         Convert various input formats to a numpy array of integers (0s and 1s)
 
@@ -44,11 +42,11 @@ class DiscreteFourierTransformTest:
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -92,20 +90,20 @@ class DiscreteFourierTransformTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "threshold": T,
-            "percentile": percentile,
-            "N_l": N_l,  # Number of peaks below threshold
-            "N_o": N_o,  # Expected number of peaks below threshold
-            "d": d,  # Normalized difference
-            "peaks_total": len(magnitudes),
-            "peaks_below_threshold": int(N_l),
+            'n': n,
+            'threshold': T,
+            'percentile': percentile,
+            'N_l': N_l,  # Number of peaks below threshold
+            'N_o': N_o,  # Expected number of peaks below threshold
+            'd': d,  # Normalized difference
+            'peaks_total': len(magnitudes),
+            'peaks_below_threshold': int(N_l),
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
@@ -118,7 +116,7 @@ class DiscreteFourierTransformTest:
         Returns:
             dict: Test results (same as test() method)
         """
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
@@ -133,35 +131,33 @@ def format_test_report(test_results: dict) -> str:
     Returns:
         str: Formatted report
     """
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
     report = [
-        "\nDISCRETE FOURIER TRANSFORM TEST",
-        "-" * 45,
-        "COMPUTATIONAL INFORMATION:",
-        "-" * 45,
-        f"(a) Percentile      = {stats['percentile']:.6f}",
-        f"(b) N_l            = {stats['N_l']:.6f}",
-        f"(c) N_o            = {stats['N_o']:.6f}",
-        f"(d) d              = {stats['d']:.6f}",
-        f"(e) Threshold      = {stats['threshold']:.6f}",
-        f"(f) Peaks analyzed = {stats['peaks_total']}",
-        "-" * 45,
-        f"{'SUCCESS' if test_results['success'] else 'FAILURE'}",
-        f"p_value = {test_results['p_value']:.6f}\n",
+        '\nDISCRETE FOURIER TRANSFORM TEST',
+        '-' * 45,
+        'COMPUTATIONAL INFORMATION:',
+        '-' * 45,
+        f'(a) Percentile      = {stats["percentile"]:.6f}',
+        f'(b) N_l            = {stats["N_l"]:.6f}',
+        f'(c) N_o            = {stats["N_o"]:.6f}',
+        f'(d) d              = {stats["d"]:.6f}',
+        f'(e) Threshold      = {stats["threshold"]:.6f}',
+        f'(f) Peaks analyzed = {stats["peaks_total"]}',
+        '-' * 45,
+        f'{"SUCCESS" if test_results["success"] else "FAILURE"}',
+        f'p_value = {test_results["p_value"]:.6f}\n',
     ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Discrete Fourier Transform Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Discrete Fourier Transform Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

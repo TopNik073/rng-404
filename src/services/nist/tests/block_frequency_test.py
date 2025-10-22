@@ -23,11 +23,9 @@ class BlockFrequencyTest:
         """
         self.block_size = block_size
         self.significance_level = significance_level
-        self.name = "Block Frequency Test"
+        self.name = 'Block Frequency Test'
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """
         Convert various input formats to a numpy array of integers (0s and 1s)
 
@@ -44,11 +42,11 @@ class BlockFrequencyTest:
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -69,9 +67,7 @@ class BlockFrequencyTest:
 
         # Check if sequence length is sufficient
         if n < self.block_size:
-            raise ValueError(
-                f"Input sequence length ({n}) is too short for block size {self.block_size}"
-            )
+            raise ValueError(f'Input sequence length ({n}) is too short for block size {self.block_size}')
 
         # Calculate number of blocks and truncate sequence if necessary
         N = n // self.block_size
@@ -93,18 +89,18 @@ class BlockFrequencyTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "block_size": self.block_size,
-            "num_blocks": N,
-            "discarded_bits": discarded_bits,
-            "chi_squared": chi_squared,
-            "block_frequencies": pi.tolist(),  # Convert to list for JSON serialization
+            'n': n,
+            'block_size': self.block_size,
+            'num_blocks': N,
+            'discarded_bits': discarded_bits,
+            'chi_squared': chi_squared,
+            'block_frequencies': pi.tolist(),  # Convert to list for JSON serialization
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
@@ -117,7 +113,7 @@ class BlockFrequencyTest:
         Returns:
             dict: Test results (same as test() method)
         """
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
@@ -132,37 +128,33 @@ def format_test_report(test_results: dict) -> str:
     Returns:
         str: Formatted report
     """
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
     report = [
-        "BLOCK FREQUENCY TEST",
-        "-" * 45,
-        "COMPUTATIONAL INFORMATION:",
-        "-" * 45,
-        f"(a) Chi^2             = {stats['chi_squared']:.6f}",
-        f"(b) # of blocks       = {stats['num_blocks']}",
-        f"(c) Block length      = {stats['block_size']}",
-        f"(d) Sequence length   = {stats['n']}",
-        f"(e) Discarded bits    = {stats['discarded_bits']}",
-        "-" * 45,
-        "SUCCESS" if test_results["success"] else "FAILURE",
-        f"p_value = {test_results['p_value']:.6f}\n",
+        'BLOCK FREQUENCY TEST',
+        '-' * 45,
+        'COMPUTATIONAL INFORMATION:',
+        '-' * 45,
+        f'(a) Chi^2             = {stats["chi_squared"]:.6f}',
+        f'(b) # of blocks       = {stats["num_blocks"]}',
+        f'(c) Block length      = {stats["block_size"]}',
+        f'(d) Sequence length   = {stats["n"]}',
+        f'(e) Discarded bits    = {stats["discarded_bits"]}',
+        '-' * 45,
+        'SUCCESS' if test_results['success'] else 'FAILURE',
+        f'p_value = {test_results["p_value"]:.6f}\n',
     ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Block Frequency Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--block-size", type=int, default=128, help="Size of each block (default: 128)"
-    )
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Block Frequency Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--block-size', type=int, default=128, help='Size of each block (default: 128)')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

@@ -20,6 +20,7 @@ LSB_BITS: Final[int] = 8
 MIN_BASE: Final[int] = 2
 MAX_BASE: Final[int] = 36
 
+
 class RNG:
     def __init__(self, source_getter: LocusonusClient) -> None:
         self.source_getter = source_getter
@@ -48,29 +49,29 @@ class RNG:
 
     def check_params(self, params: GenerateRequestSchema):
         if params.base < MIN_BASE or params.base > MAX_BASE:
-            raise HTTPException(400, "base must be between 2 and 36")
+            raise HTTPException(400, 'base must be between 2 and 36')
 
         try:
             from_int = int(params.from_num, params.base)
             to_int = int(params.to_num, params.base)
         except ValueError as e:
-            raise HTTPException(400, f"Не удалось распарсить from/to в основании {params.base}: {e!s}") from e  # noqa
+            raise HTTPException(400, f'Не удалось распарсить from/to в основании {params.base}: {e!s}') from e  # noqa
 
         if from_int > to_int:
-            raise HTTPException(400, "from_num должно быть <= to_num")
+            raise HTTPException(400, 'from_num должно быть <= to_num')
 
         range_size = to_int - from_int + 1
         if params.count > range_size:
-            raise HTTPException(400, "count больше размера диапазона (кол-во уникальных значений невозможно)")
+            raise HTTPException(400, 'count больше размера диапазона (кол-во уникальных значений невозможно)')
 
     def _bytes_to_int(self, b: bytes) -> int:
-        return int.from_bytes(b, "big")
+        return int.from_bytes(b, 'big')
 
     def _int_to_base(self, value: int, base: int) -> str:
-        digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         if value == 0:
-            return "0"
-        s = ""
+            return '0'
+        s = ''
         while value > 0:
             value, r = divmod(value, base)
             s = digits[r] + s
@@ -97,15 +98,15 @@ class RNG:
             base_str_parts.append(s)
             generated_digits += len(s)
 
-        return "".join(base_str_parts)
+        return ''.join(base_str_parts)
 
     def generate_from_strings(
-            self,
-            from_str: str,
-            to_str: str,
-            count: int,
-            base: int,
-            uniq_only: bool,
+        self,
+        from_str: str,
+        to_str: str,
+        count: int,
+        base: int,
+        uniq_only: bool,
     ) -> list[str]:
         """
         from_str, to_str — числа в виде строк в системе счисления 'base'.
@@ -125,14 +126,14 @@ class RNG:
         chunk_digits = max(digits_needed, 4)
 
         result_list = []
-        base_buffer = ""
+        base_buffer = ''
         read_pos = 0
 
         def next_candidate() -> int | None:
             nonlocal base_buffer, read_pos
             if read_pos + chunk_digits > len(base_buffer):
                 return None
-            chunk = base_buffer[read_pos: read_pos + chunk_digits]
+            chunk = base_buffer[read_pos : read_pos + chunk_digits]
             read_pos += chunk_digits
             try:
                 val = int(chunk, base)
@@ -167,12 +168,12 @@ class RNG:
 
     def _next_block(self) -> bytes:
         """Генерирует 64 байта новых случайных данных"""
-        data = self.seed + self.counter.to_bytes(8, "big")
+        data = self.seed + self.counter.to_bytes(8, 'big')
         self.counter += 1
         return hashlib.blake2b(data, digest_size=64).digest()
 
     def bytes_to_bits(self, data: bytes) -> str:
-        return "".join(f"{byte:08b}" for byte in data)
+        return ''.join(f'{byte:08b}' for byte in data)
 
     def get_bytes(self, n: int) -> bytes:
         """Возвращает n случайных байтов"""
@@ -190,13 +191,13 @@ class RNG:
 
         result: list[int] = []
         for i in range(0, 6, 2):
-            num = int(microseconds[i:i + 2])
+            num = int(microseconds[i : i + 2])
             result.append(num % len_sources)
 
         return result
 
     async def capture_source(self) -> bytes:
-        all_entropy: bytes = b""
+        all_entropy: bytes = b''
         if self.uploaded_file:
             samples = await self.capture_from_upload(self.uploaded_file)
             feat = self.extract_features(samples)
@@ -213,82 +214,81 @@ class RNG:
 
         return all_entropy
 
-
     @staticmethod
     async def capture_from_stream(url: str) -> np.ndarray:
         cmd = [
-            "ffmpeg",
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-i",
+            'ffmpeg',
+            '-hide_banner',
+            '-loglevel',
+            'error',
+            '-i',
             url,
-            "-t",
+            '-t',
             str(EXC_DURATION),
-            "-ar",
+            '-ar',
             str(SYMBOL_RATE),
-            "-ac",
-            "1",
-            "-f",
-            "f32le",
-            "pipe:1",
+            '-ac',
+            '1',
+            '-f',
+            'f32le',
+            'pipe:1',
         ]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         raw = p.stdout.read()
         p.wait()
         if len(raw) == 0:
-            raise RuntimeError("No data from ffmpeg. Check URL or ffmpeg availability.")
+            raise RuntimeError('No data from ffmpeg. Check URL or ffmpeg availability.')
         return np.frombuffer(raw, dtype=np.float32)
 
     @staticmethod
     async def capture_from_upload(file: UploadFile) -> np.ndarray:
         if not file.content_type.startswith('audio/'):
-            raise HTTPException(400, "File must be an audio file")
+            raise HTTPException(400, 'File must be an audio file')
 
         try:
             content = await file.read()
 
             if len(content) == 0:
-                raise HTTPException(400, "Uploaded file is empty")
+                raise HTTPException(400, 'Uploaded file is empty')
 
             cmd = [
-                "ffmpeg",
-                "-hide_banner",
-                "-loglevel", "error",
-                "-i", "pipe:0",
-                "-ar", str(SYMBOL_RATE),
-                "-ac", "1",
-                "-f", "f32le",
-                "pipe:1",
+                'ffmpeg',
+                '-hide_banner',
+                '-loglevel',
+                'error',
+                '-i',
+                'pipe:0',
+                '-ar',
+                str(SYMBOL_RATE),
+                '-ac',
+                '1',
+                '-f',
+                'f32le',
+                'pipe:1',
             ]
 
-            p = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             raw, stderr = p.communicate(input=content)
 
             if p.returncode != 0:
                 error_msg = stderr.decode().strip()
-                raise HTTPException(500, f"FFmpeg error: {error_msg}")
+                raise HTTPException(500, f'FFmpeg error: {error_msg}')
 
             if len(raw) == 0:
-                raise HTTPException(500, "FFmpeg produced no output")
+                raise HTTPException(500, 'FFmpeg produced no output')
 
             return np.frombuffer(raw, dtype=np.float32)
 
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise e
-            raise HTTPException(500, f"Error processing audio: {e!s}")  # noqa
+            raise HTTPException(500, f'Error processing audio: {e!s}')  # noqa
 
     def extract_features(self, samples: np.ndarray) -> bytearray:
         # normalize samples
         if samples.dtype not in (np.float32, np.float64):
-            samples = samples.astype("float32") / np.iinfo(samples.dtype).max
+            samples = samples.astype('float32') / np.iinfo(samples.dtype).max
         samples = samples - np.mean(samples)
         n = len(samples)
 
@@ -335,10 +335,10 @@ class RNG:
             uint_view = mag.view(np.uint64)
             max_bits = 64
         else:
-            raise ValueError("mag must be float32 or float64")
+            raise ValueError('mag must be float32 or float64')
 
         if bits > max_bits or bits <= 0:
-            raise ValueError(f"bits must be between 1 and {max_bits}")
+            raise ValueError(f'bits must be between 1 and {max_bits}')
 
         mask = (1 << bits) - 1
         lsb_vals = uint_view & mask
@@ -360,14 +360,14 @@ class RNG:
 
         plt.figure(figsize=(6, 4))
         plt.plot(mag_to_plot, linewidth=1.2, color='#FD641B')
-        plt.title("Спектральный анализ частот")
-        plt.xlabel("Сэмплы")
-        plt.ylabel("Амплитуда")
+        plt.title('Спектральный анализ частот')
+        plt.xlabel('Сэмплы')
+        plt.ylabel('Амплитуда')
         plt.grid(alpha=0.3)
         plt.tight_layout()
 
         buf = io.BytesIO()
-        plt.savefig(buf, format="png", dpi=120)
+        plt.savefig(buf, format='png', dpi=120)
         buf.seek(0)
         plt.close()
 

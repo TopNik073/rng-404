@@ -21,11 +21,9 @@ class FrequencyTest:
             significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
-        self.name = "Frequency (Monobit) Test"
+        self.name = 'Frequency (Monobit) Test'
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """
         Convert various input formats to a numpy array of integers (0s and 1s)
 
@@ -43,11 +41,11 @@ class FrequencyTest:
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
             # Convert each byte to its binary representation
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -75,18 +73,18 @@ class FrequencyTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "ones_count": np.sum(sequence == 1),
-            "zeros_count": np.sum(sequence == 0),
-            "ones_proportion": np.mean(sequence),
-            "partial_sum": s.sum(),
-            "s_obs": s_obs,
+            'n': n,
+            'ones_count': np.sum(sequence == 1),
+            'zeros_count': np.sum(sequence == 0),
+            'ones_proportion': np.mean(sequence),
+            'partial_sum': s.sum(),
+            's_obs': s_obs,
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
@@ -99,7 +97,7 @@ class FrequencyTest:
         Returns:
             dict: Test results (same as test() method)
         """
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
@@ -114,34 +112,32 @@ def format_test_report(test_results: dict) -> str:
     Returns:
         str: Formatted report
     """
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
     report = [
-        "FREQUENCY (MONOBIT) TEST",
-        "-" * 45,
-        "COMPUTATIONAL INFORMATION:",
-        "-" * 45,
-        f"(a) The length of the bit string, n = {stats['n']}",
-        f"(b) Ones count = {stats['ones_count']}",
-        f"(c) Zeros count = {stats['zeros_count']}",
-        f"(d) The nth partial sum = {stats['partial_sum']}",
-        f"(e) S_n/n = {stats['partial_sum']/stats['n']:.6f}",
-        "-" * 45,
-        "SUCCESS" if test_results["success"] else "FAILURE",
-        f"p_value = {test_results['p_value']:.6f}\n",
+        'FREQUENCY (MONOBIT) TEST',
+        '-' * 45,
+        'COMPUTATIONAL INFORMATION:',
+        '-' * 45,
+        f'(a) The length of the bit string, n = {stats["n"]}',
+        f'(b) Ones count = {stats["ones_count"]}',
+        f'(c) Zeros count = {stats["zeros_count"]}',
+        f'(d) The nth partial sum = {stats["partial_sum"]}',
+        f'(e) S_n/n = {stats["partial_sum"] / stats["n"]:.6f}',
+        '-' * 45,
+        'SUCCESS' if test_results['success'] else 'FAILURE',
+        f'p_value = {test_results["p_value"]:.6f}\n',
     ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Frequency (Monobit) Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Frequency (Monobit) Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

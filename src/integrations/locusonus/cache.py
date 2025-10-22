@@ -5,12 +5,8 @@ from src.integrations.redis.client import RedisClient
 
 
 class LocusonusCacheKeeper:
-    def __init__(
-            self,
-            redis_client: RedisClient,
-            ttl: int
-    ):
-        self.key: str = "locusonus_cache"
+    def __init__(self, redis_client: RedisClient, ttl: int):
+        self.key: str = 'locusonus_cache'
         self.redis: RedisClient = redis_client
         self.ttl = ttl
 
