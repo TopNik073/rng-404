@@ -49,7 +49,7 @@ class AppConfig(BaseSettings):
     # ----- LOCUSONUS API -----
     LOCUSONUS_API_URL: str = 'https://locusonus.org'
     LOCUSONUS_API_TIMEOUT: float = 10.0
-    LOCUSONUS_API_TTL: int = 300
+    LOCUSONUS_API_TTL: int = 600
 
 
 env_config = EnvConfig()
