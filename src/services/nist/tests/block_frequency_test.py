@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from typing import Union, List
 from pathlib import Path
 
 
@@ -20,14 +19,14 @@ class BlockFrequencyTest:
 
         Args:
             block_size: The size of each block (M). Default is 128
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.block_size = block_size
         self.significance_level = significance_level
         self.name = "Block Frequency Test"
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """
         Convert various input formats to a numpy array of integers (0s and 1s)
@@ -44,15 +43,14 @@ class BlockFrequencyTest:
         """
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Block Frequency Test
 
@@ -109,7 +107,7 @@ class BlockFrequencyTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """
         Run the Block Frequency Test on a file
 
@@ -119,7 +117,7 @@ class BlockFrequencyTest:
         Returns:
             dict: Test results (same as test() method)
         """
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -147,7 +145,7 @@ def format_test_report(test_results: dict) -> str:
         f"(d) Sequence length   = {stats['n']}",
         f"(e) Discarded bits    = {stats['discarded_bits']}",
         "-" * 45,
-        f"SUCCESS" if test_results["success"] else "FAILURE",
+        "SUCCESS" if test_results["success"] else "FAILURE",
         f"p_value = {test_results['p_value']:.6f}\n",
     ]
 
@@ -173,4 +171,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

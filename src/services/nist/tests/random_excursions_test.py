@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 
 
@@ -18,7 +17,7 @@ class RandomExcursionsTest:
         Initialize the Random Excursions Test
 
         Args:
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
         self.name = "Random Excursions Test"
@@ -74,18 +73,17 @@ class RandomExcursionsTest:
         )
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _find_cycles(self, cumsum: np.ndarray) -> np.ndarray:
         """Find indices where cumulative sum returns to zero (cycle endpoints)"""
@@ -100,7 +98,7 @@ class RandomExcursionsTest:
 
         return zero_crossings
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Random Excursions Test
 
@@ -129,7 +127,7 @@ class RandomExcursionsTest:
 
         # Check if we have enough cycles
         constraint = max(0.005 * np.sqrt(n), 500)
-        if J < constraint:
+        if constraint > J:
             return {
                 "success": False,
                 "error": "Insufficient number of cycles",
@@ -149,15 +147,15 @@ class RandomExcursionsTest:
 
             # Count visits to states -4 to -1 and 1 to 4
             for state in cycle:
-                if -4 <= state <= -1:
+                if -4 <= state <= -1:  # noqa
                     counter[state + 4] += 1
-                elif 1 <= state <= 4:
+                elif 1 <= state <= 4:  # noqa
                     counter[state + 3] += 1
 
             # Update nu matrix
             for i in range(8):
                 visits = counter[i]
-                if visits <= 4:
+                if visits <= 4:  # noqa
                     nu[visits][i] += 1
                 else:
                     nu[5][i] += 1
@@ -199,9 +197,9 @@ class RandomExcursionsTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Random Excursions Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -235,10 +233,10 @@ def format_test_report(test_results: dict) -> str:
         "\t\t-------------------------------------------",
     ]
 
-    for i, (state, p_value, chi_square) in enumerate(
-        zip(stats["states"], test_results["p_values"], stats["chi_squared"])
+    for _i, (state, p_value, chi_square) in enumerate(
+        zip(stats["states"], test_results["p_values"], stats["chi_squared"], strict=False)
     ):
-        status = "SUCCESS" if p_value >= 0.01 else "FAILURE"
+        status = "SUCCESS" if p_value >= 0.01 else "FAILURE"  # noqa
         if not (0 <= p_value <= 1):
             report.append("\t\tWARNING:  P_VALUE IS OUT OF RANGE")
         report.append(
@@ -265,4 +263,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -11,8 +10,8 @@ class BlockConfig:
 
     K: int  # Number of degrees of freedom
     M: int  # Block length
-    V: List[int]  # Values for run length categories
-    pi: List[float]  # Theoretical probabilities
+    V: list[int]  # Values for run length categories
+    pi: list[float]  # Theoretical probabilities
 
 
 class LongestRunsTest:
@@ -30,7 +29,7 @@ class LongestRunsTest:
         Initialize the Longest Runs Test
 
         Args:
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
         self.name = "Longest Runs of Ones Test"
@@ -62,29 +61,27 @@ class LongestRunsTest:
         }
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _get_config(self, n: int) -> BlockConfig:
         """Get the appropriate configuration based on sequence length"""
-        if n < 128:
+        if n < 128:  # noqa
             raise ValueError(f"Sequence length {n} is too short (minimum 128)")
-        elif n < 6272:
+        if n < 6272:  # noqa
             return self.configs["short"]
-        elif n < 750000:
+        if n < 750000:  # noqa
             return self.configs["medium"]
-        else:
-            return self.configs["long"]
+        return self.configs["long"]
 
     def _find_longest_run_in_block(self, block: np.ndarray) -> int:
         """Find the longest run of ones in a block"""
@@ -95,7 +92,7 @@ class LongestRunsTest:
 
     def _count_frequencies(
         self, sequence: np.ndarray, config: BlockConfig
-    ) -> Tuple[List[int], int]:
+    ) -> tuple[list[int], int]:
         """Count frequencies of different run lengths in blocks"""
         N = len(sequence) // config.M  # Number of blocks
         nu = np.zeros(config.K + 1, dtype=int)
@@ -118,7 +115,7 @@ class LongestRunsTest:
 
         return nu, N
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Longest Runs Test
 
@@ -157,7 +154,6 @@ class LongestRunsTest:
 
         # Ensure p-value is valid
         if p_value < 0 or p_value > 1:
-            print("WARNING: P_VALUE IS OUT OF RANGE")
             p_value = 0 if p_value < 0 else 1
 
         # Prepare statistics
@@ -178,9 +174,9 @@ class LongestRunsTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Longest Runs Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -206,9 +202,9 @@ def format_test_report(test_results: dict) -> str:
     ]
 
     # Add frequency table header based on block size
-    if stats["block_size"] == 8:
+    if stats["block_size"] == 8:  # noqa
         report.append("  <=1     2     3    >=4   P-value  Assignment")
-    elif stats["block_size"] == 128:
+    elif stats["block_size"] == 128:  # noqa
         report.append("  <=4  5  6  7  8  >=9 P-value  Assignment")
     else:
         report.append("  <=10  11  12  13  14  15 >=16 P-value  Assignment")
@@ -244,4 +240,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.stats import norm
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 
 
@@ -20,24 +19,23 @@ class CumulativeSumsTest:
         Initialize the Cumulative Sums Test
 
         Args:
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
         self.name = "Cumulative Sums (Cusums) Test"
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _compute_p_value(self, z: int, n: int) -> float:
         """
@@ -65,10 +63,9 @@ class CumulativeSumsTest:
             - norm.cdf((4 * k_range2 + 1) * z / np.sqrt(n))
         )
 
-        p_value = 1.0 - sum1 + sum2
-        return p_value
+        return 1.0 - sum1 + sum2
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Cumulative Sums Test
 
@@ -94,7 +91,7 @@ class CumulativeSumsTest:
         inf = np.minimum.accumulate(S)
 
         # Maximum absolute excursion (forward)
-        z_forward = max(max(sup), -min(inf))
+        z_forward = max(*sup, -min(inf))
 
         # Reverse sequence for backward test
         S_rev = np.cumsum(sequence[::-1])
@@ -102,7 +99,7 @@ class CumulativeSumsTest:
         inf_rev = np.minimum.accumulate(S_rev)
 
         # Maximum absolute excursion (reverse)
-        z_reverse = max(max(sup_rev), -min(inf_rev))
+        z_reverse = max(*sup_rev, -min(inf_rev))
 
         # Calculate p-values
         p_value_forward = self._compute_p_value(z_forward, n)
@@ -125,9 +122,9 @@ class CumulativeSumsTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Cumulative Sums Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -142,8 +139,8 @@ def format_test_report(test_results: dict) -> str:
         )
 
     stats = test_results["statistics"]
-    status_forward = "SUCCESS" if test_results["p_value_forward"] >= 0.01 else "FAILURE"
-    status_reverse = "SUCCESS" if test_results["p_value_reverse"] >= 0.01 else "FAILURE"
+    status_forward = "SUCCESS" if test_results["p_value_forward"] >= 0.01 else "FAILURE"  # noqa
+    status_reverse = "SUCCESS" if test_results["p_value_reverse"] >= 0.01 else "FAILURE"  # noqa
 
     report = [
         "\n\t\t      CUMULATIVE SUMS (FORWARD) TEST",
@@ -195,4 +192,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

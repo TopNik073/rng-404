@@ -4,7 +4,7 @@ from fastapi import Query
 from pydantic import BaseModel, Field
 
 
-class GenerateRequestSchema(BaseModel):
+class NistRequestSchema(BaseModel):
     sequence: str = Field(None)
     included_tests: list[str] = Field(
         [
@@ -27,7 +27,7 @@ class GenerateRequestSchema(BaseModel):
     )
 
 
-GEN_REQ_SCHEMA = Annotated[GenerateRequestSchema, Query()]
+NIST_REQ_SCHEMA = Annotated[NistRequestSchema, Query()]
 
 
 class GeneratorResponseSchema(BaseModel): ...

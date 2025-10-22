@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 
 
@@ -18,7 +17,7 @@ class RandomExcursionsVariantTest:
         Initialize the Random Excursions Variant Test
 
         Args:
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
         self.name = "Random Excursions Variant Test"
@@ -29,20 +28,19 @@ class RandomExcursionsVariantTest:
         )
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Random Excursions Variant Test
 
@@ -72,7 +70,7 @@ class RandomExcursionsVariantTest:
 
         # Check if we have enough cycles
         constraint = max(0.005 * np.sqrt(n), 500)
-        if J < constraint:
+        if constraint > J:
             return {
                 "success": False,
                 "error": "Insufficient number of cycles",
@@ -108,9 +106,9 @@ class RandomExcursionsVariantTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Random Excursions Variant Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -144,9 +142,9 @@ def format_test_report(test_results: dict) -> str:
     ]
 
     for x, visits, p_value in zip(
-        stats["states"], stats["visits"], test_results["p_values"]
+        stats["states"], stats["visits"], test_results["p_values"], strict=False
     ):
-        status = "SUCCESS" if p_value >= 0.01 else "FAILURE"
+        status = "SUCCESS" if p_value >= 0.01 else "FAILURE"  # noqa
         if not (0 <= p_value <= 1):
             report.append("\t\t(b) WARNING: P_VALUE IS OUT OF RANGE.")
         report.append(
@@ -173,4 +171,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

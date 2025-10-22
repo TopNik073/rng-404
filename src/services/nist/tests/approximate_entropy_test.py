@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 
 
@@ -20,29 +19,28 @@ class ApproximateEntropyTest:
 
         Args:
             block_length: Length m of each block. Default is 10
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level (a). Default is 0.01 (1%) # noqa
         """
         self.block_length = block_length
         self.significance_level = significance_level
         self.name = "Approximate Entropy Test"
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _compute_frequency(
         self, sequence: np.ndarray, block_size: int
-    ) -> Tuple[np.ndarray, int]:
+    ) -> tuple[np.ndarray, int]:
         """
         Compute frequencies of all possible patterns of given block size
 
@@ -97,13 +95,12 @@ class ApproximateEntropyTest:
             return 0.0
 
         # Calculate entropy sum
-        entropy_sum = (
+        return (
             np.sum(non_zero_freq * np.log(non_zero_freq / seq_length)) / seq_length
         )
 
-        return entropy_sum
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Approximate Entropy Test
 
@@ -140,7 +137,7 @@ class ApproximateEntropyTest:
                 ApEn[0] = 0.0
             else:
                 # Compute pattern frequencies
-                frequencies, power_len = self._compute_frequency(sequence, block_size)
+                frequencies, _power_len = self._compute_frequency(sequence, block_size)
 
                 # Compute entropy
                 entropy = self._compute_entropy(frequencies, n, block_size)
@@ -168,9 +165,9 @@ class ApproximateEntropyTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Approximate Entropy Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -241,4 +238,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

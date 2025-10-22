@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 
 
@@ -8,7 +7,7 @@ class LinearComplexityTest:
     """
     Implementation of NIST's Linear Complexity Test
 
-    This test determines whether or not the sequence is complex enough to be considered
+    This test determines whether the sequence is complex enough to be considered
     random. Random sequences are characterized by longer linear feedback shift registers (LFSRs).
     An LFSR that is too short implies non-randomness.
     """
@@ -19,7 +18,7 @@ class LinearComplexityTest:
 
         Args:
             block_size: The length M of each block. Default is 500
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.block_size = block_size
         self.significance_level = significance_level
@@ -34,18 +33,17 @@ class LinearComplexityTest:
         )
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _berlekamp_massey(self, block: np.ndarray) -> int:
         """
@@ -71,7 +69,7 @@ class LinearComplexityTest:
         m = -1  # Index of last update
         N = 0  # Number of bits processed
 
-        while N < n:
+        while n > N:
             # Compute discrepancy
             d = int(block[N])
             for i in range(1, L + 1):
@@ -92,7 +90,7 @@ class LinearComplexityTest:
 
         return L
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Linear Complexity Test
 
@@ -130,7 +128,6 @@ class LinearComplexityTest:
             L = self._berlekamp_massey(block)
 
             # Calculate expected mean value
-            # Mean = M/2 + (9 + (M+1)%2)/36 - 1/2^M * (M/3 + 2/9)
             M = self.block_size
             parity = (M + 1) % 2
             sign = 1 if parity == 0 else -1
@@ -145,17 +142,17 @@ class LinearComplexityTest:
             T = sign * (L - mean) + 2.0 / 9.0
 
             # Assign to appropriate bin
-            if T <= -2.5:
+            if T <= -2.5:  #noqa
                 nu[0] += 1
-            elif T <= -1.5:
+            elif T <= -1.5:  #noqa
                 nu[1] += 1
-            elif T <= -0.5:
+            elif T <= -0.5:  #noqa
                 nu[2] += 1
-            elif T <= 0.5:
+            elif T <= 0.5:  #noqa
                 nu[3] += 1
-            elif T <= 1.5:
+            elif T <= 1.5:  #noqa
                 nu[4] += 1
-            elif T <= 2.5:
+            elif T <= 2.5:  #noqa
                 nu[5] += 1
             else:
                 nu[6] += 1
@@ -183,9 +180,9 @@ class LinearComplexityTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Linear Complexity Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -250,4 +247,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

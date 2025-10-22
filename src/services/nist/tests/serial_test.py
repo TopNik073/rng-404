@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
 
 
@@ -20,25 +19,24 @@ class SerialTest:
 
         Args:
             pattern_length: Length m of each pattern (block). Default is 16
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.pattern_length = pattern_length
         self.significance_level = significance_level
         self.name = "Serial Test"
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _psi2(self, m: int, sequence: np.ndarray) -> float:
         """
@@ -72,11 +70,10 @@ class SerialTest:
         # Calculate ψ² statistic
         # Only use counts for complete m-bit patterns (last 2^m entries)
         relevant_counts = pattern_counts[2**m - 1 : 2 ** (m + 1) - 1]
-        psi_sq = (2**m / n) * np.sum(relevant_counts**2) - n
+        return (2**m / n) * np.sum(relevant_counts**2) - n
 
-        return psi_sq
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Serial Test
 
@@ -136,9 +133,9 @@ class SerialTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Serial Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -153,8 +150,8 @@ def format_test_report(test_results: dict) -> str:
         )
 
     stats = test_results["statistics"]
-    status1 = "SUCCESS" if test_results["p_value1"] >= 0.01 else "FAILURE"
-    status2 = "SUCCESS" if test_results["p_value2"] >= 0.01 else "FAILURE"
+    status1 = "SUCCESS" if test_results["p_value1"] >= 0.01 else "FAILURE"  # noqa
+    status2 = "SUCCESS" if test_results["p_value2"] >= 0.01 else "FAILURE"  # noqa
 
     report = [
         "\n\t\t\tSERIAL TEST",
@@ -198,4 +195,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

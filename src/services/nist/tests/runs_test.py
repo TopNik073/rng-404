@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from typing import Union, List
 from pathlib import Path
 
 
@@ -19,13 +18,13 @@ class RunsTest:
         Initialize the Runs Test
 
         Args:
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
         self.name = "Runs Test"
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """
         Convert various input formats to a numpy array of integers (0s and 1s)
@@ -42,13 +41,12 @@ class RunsTest:
         """
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _count_runs(self, sequence: np.ndarray) -> int:
         """
@@ -66,7 +64,7 @@ class RunsTest:
         # Add 1 because number of runs is one more than number of transitions
         return np.sum(sequence[1:] != sequence[:-1]) + 1
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Runs Test
 
@@ -115,7 +113,6 @@ class RunsTest:
 
         # Ensure p-value is valid
         if p_value < 0 or p_value > 1:
-            print("WARNING: P_VALUE IS OUT OF RANGE")
             p_value = 0 if p_value < 0 else 1
 
         # Prepare statistics
@@ -135,7 +132,7 @@ class RunsTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """
         Run the Runs Test on a file
 
@@ -145,7 +142,7 @@ class RunsTest:
         Returns:
             dict: Test results (same as test() method)
         """
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -185,7 +182,7 @@ def format_test_report(test_results: dict) -> str:
             f"(d) Expected number of runs      = {stats['expected_runs']:.6f}",
             f"(e) Test statistic               = {stats['test_statistic']:.6f}",
             "-" * 45,
-            f"SUCCESS" if test_results["success"] else "FAILURE",
+            "SUCCESS" if test_results["success"] else "FAILURE",
             f"p_value = {test_results['p_value']:.6f}\n",
         ]
 
@@ -208,4 +205,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))

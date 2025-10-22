@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.special import gammaincc, gammaln
-from typing import Union, List, Dict, Tuple
 from pathlib import Path
-import os
 
 
 class NonOverlappingTemplateTest:
@@ -20,7 +18,7 @@ class NonOverlappingTemplateTest:
 
         Args:
             template_length: Length m of the templates to test (2-21)
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.template_length = template_length
         self.significance_level = significance_level
@@ -60,34 +58,32 @@ class NonOverlappingTemplateTest:
         # Recommended M ≈ 1032 for million-bit sequence with m = 9
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
-    def _read_templates(self, templates_dir: str) -> List[np.ndarray]:
+    def _read_templates(self, templates_dir: str) -> list[np.ndarray]:
         """Read templates from template files"""
-        template_file = os.path.join(templates_dir, f"template{self.template_length}")
+        template_file = Path(templates_dir) / f"template{self.template_length}"
 
-        if not os.path.exists(template_file):
+        if not Path.exists(Path(template_file)):
             raise FileNotFoundError(f"Template file not found: {template_file}")
 
         # Read all lines and process them
         templates = []
         current_template = []
 
-        with open(template_file, "r") as f:
+        with Path.open(Path(template_file)) as f:
             for line in f:
-                line = line.strip()
-                if not line:  # Skip empty lines
+                if not line.strip():  # Skip empty lines
                     continue
 
                 try:
@@ -162,14 +158,12 @@ class NonOverlappingTemplateTest:
 
     def test(
         self,
-        binary_data: Union[str, bytes, List[int], np.ndarray],
-        templates_dir: str = None,
+        binary_data: str | bytes | list[int] | np.ndarray,
+        templates_dir: str | None = None,
     ) -> dict:
         if templates_dir is None:
             # Use absolute path to templates directory
-            templates_dir = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "templates"
-            )
+            templates_dir = Path(__file__).parent / "templates"
         """
         Run the Non-overlapping Template Test
 
@@ -188,7 +182,7 @@ class NonOverlappingTemplateTest:
         n = len(sequence)
 
         # Compute block size M as per NIST SP 800-22
-        if n >= 1000000:
+        if n >= 1000000:  # noqa
             M = 1032  # Recommended size for million-bit sequence
         else:
             M = n // self.B  # For smaller sequences
@@ -279,9 +273,9 @@ class NonOverlappingTemplateTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path], templates_dir: str = None) -> dict:
+    def test_file(self, file_path: str | Path, templates_dir: str | None = None) -> dict:
         """Run the Non-overlapping Template Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data, templates_dir)
 
@@ -355,4 +349,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file, args.templates_dir)
 
     # Print report
-    print(format_test_report(results))

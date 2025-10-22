@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from typing import Union, List, Dict
 from pathlib import Path
 
 
@@ -19,7 +18,7 @@ class UniversalTest:
         Initialize the Universal Statistical Test
 
         Args:
-            significance_level: The significance level (α). Default is 0.01 (1%)
+            significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
         self.name = "Universal Statistical Test"
@@ -71,18 +70,17 @@ class UniversalTest:
         )
 
     def _convert_to_binary_list(
-        self, input_data: Union[str, bytes, List[int], np.ndarray]
+        self, input_data: str | bytes | list[int] | np.ndarray
     ) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
-        elif isinstance(input_data, bytes):
+        if isinstance(input_data, bytes):
             binary_str = "".join(format(byte, "08b") for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
-        elif isinstance(input_data, (list, np.ndarray)):
+        if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        else:
-            raise ValueError("Unsupported input format")
+        raise ValueError("Unsupported input format")
 
     def _determine_block_size(self, n: int) -> int:
         """
@@ -128,7 +126,7 @@ class UniversalTest:
         # Convert each block to an integer
         return np.sum(blocks * powers, axis=1)
 
-    def test(self, binary_data: Union[str, bytes, List[int], np.ndarray]) -> dict:
+    def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run Maurer's Universal Statistical Test
 
@@ -151,7 +149,7 @@ class UniversalTest:
         K = n // L - Q  # Test phase blocks
 
         # Validate parameters
-        if L < 6 or L > 16 or Q < 10 * 2**L:
+        if L < 6 or L > 16 or Q < 10 * 2**L:  # noqa
             return {
                 "success": False,
                 "error": (
@@ -219,9 +217,9 @@ class UniversalTest:
             "statistics": stats,
         }
 
-    def test_file(self, file_path: Union[str, Path]) -> dict:
+    def test_file(self, file_path: str | Path) -> dict:
         """Run the Universal Statistical Test on a file"""
-        with open(file_path, "rb") as f:
+        with Path.open(file_path, "rb") as f:
             data = f.read()
         return self.test(data)
 
@@ -275,4 +273,3 @@ if __name__ == "__main__":
     results = test.test_file(args.file)
 
     # Print report
-    print(format_test_report(results))
