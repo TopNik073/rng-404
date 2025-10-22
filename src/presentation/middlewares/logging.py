@@ -98,10 +98,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         trace_id = str(uuid.uuid4())
         content_type = request.headers.get("Content-Type", "")
         body = await request.body()
-        if "multipart/form-data" in content_type:
-            body = 'Not available for multipart/form-data'
-        else:
-            body = body.decode()
+        body = 'Not available for multipart/form-data' if "multipart/form-data" in content_type else body.decode()
 
         return {
             "trace_id": trace_id,

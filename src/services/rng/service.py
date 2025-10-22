@@ -23,7 +23,8 @@ class RngService:
         content = await upload_file.read()
         if upload_file and not upload_file.filename.endswith('.mp3'):
             raise HTTPException(400, 'Invalid file extension')
-        elif upload_file and upload_file.filename.endswith('.mp3'):
+
+        if upload_file and upload_file.filename.endswith('.mp3'):
             with tempfile.NamedTemporaryFile(suffix=".mp3") as tmp:
                 tmp.write(content)
                 tmp.seek(0)

@@ -14,7 +14,7 @@ class GenerateRequestSchema(BaseModel):
     uniq_only: bool = True
     format: Literal['json', 'txt'] = 'json'
 
-async def parse_generate_params(
+async def parse_generate_params(  # noqa
         from_num: str = Form(...),
         to_num: str = Form(...),
         count: int = Form(5),
