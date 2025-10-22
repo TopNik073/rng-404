@@ -10,7 +10,7 @@ async def rng_generator(
         rng_service: RNG_SERVICE_DEP,
         params: GEN_REQ_SCHEMA,
 ):
-    return await rng_service.generate()
+    return await rng_service.generate(params=params, upload_file=None)
 
 
 @rng_router.post('/generate/upload-audio')
