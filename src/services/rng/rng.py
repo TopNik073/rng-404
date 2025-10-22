@@ -1,7 +1,9 @@
 import datetime
 import hashlib
+import io
 import math
 import subprocess
+import matplotlib.pyplot as plt
 from typing import Final
 
 from fastapi import UploadFile, HTTPException
@@ -13,7 +15,7 @@ from src.integrations.locusonus.models import LocusonusResponseModel
 from src.presentation.api.v1.rng.models import GenerateRequestSchema
 
 SYMBOL_RATE: Final[int] = 48_000
-EXC_DURATION: Final[float] = 1.0
+EXC_DURATION: Final[float] = 10.0
 LSB_BITS: Final[int] = 8
 MIN_BASE: Final[int] = 2
 MAX_BASE: Final[int] = 36
@@ -24,6 +26,7 @@ class RNG:
         self.uploaded_file: UploadFile | None = None
 
         self.executed_sources: list[LocusonusResponseModel] = []
+        self.executed_images: list[io.BytesIO] = []
 
         self.seed: bytes | None = None
         self.counter: int = 0
@@ -297,6 +300,9 @@ class RNG:
         spec = np.fft.rfft(x)
         mag = np.abs(spec)
 
+        # Make graphic
+        self.plot_spectrum(mag)
+
         # extract LSB
         lsb_bytes = self.extract_lsb_from_spectrum(mag, bits=LSB_BITS)
 
@@ -344,3 +350,25 @@ class RNG:
         if bits <= 32:  # noqa
             return lsb_vals.astype(np.uint32).tobytes()
         return lsb_vals.tobytes()  # for 64-bit
+
+    def plot_spectrum(self, mag: np.ndarray):
+        """Строит наглядный график спектра и сохраняет его как BytesIO (PNG) в состояние класса"""  # noqa
+        energy = np.cumsum(mag)
+        energy /= energy[-1]
+        cut_index = np.searchsorted(energy, 0.95)
+        mag_to_plot = mag[:cut_index]
+
+        plt.figure(figsize=(6, 4))
+        plt.plot(mag_to_plot, linewidth=1.2, color='#FD641B')
+        plt.title("Спектральный анализ частот")
+        plt.xlabel("Сэмплы")
+        plt.ylabel("Амплитуда")
+        plt.grid(alpha=0.3)
+        plt.tight_layout()
+
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=120)
+        buf.seek(0)
+        plt.close()
+
+        self.executed_images.append(buf)

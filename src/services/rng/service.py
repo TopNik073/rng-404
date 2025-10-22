@@ -1,8 +1,11 @@
+import json
 import tempfile
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
 from io import BytesIO
 
 from fastapi import UploadFile, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 
 from mutagen.mp3 import MP3
 
@@ -19,7 +22,7 @@ class RngService:
             self,
             params: GenerateRequestSchema,
             upload_file: UploadFile | None
-    ) -> GeneratorResponseSchema | StreamingResponse:
+    ) -> GeneratorResponseSchema | StreamingResponse | Response:
         if upload_file and not upload_file.filename.endswith('.mp3'):
             raise HTTPException(400, 'Invalid file extension')
 
@@ -31,10 +34,7 @@ class RngService:
                 duration = audio.info.length
 
             if duration >= env_config.MAX_AUDIO_DURATION:
-                raise HTTPException(
-                    400,
-                    'Audio duration is too long. '
-                )
+                raise HTTPException(400, 'Audio duration is too long.')
 
             upload_file.file.seek(0)
 
@@ -43,13 +43,35 @@ class RngService:
         if params.format == "txt":
             content = "\n".join(random_result)
             file_like = BytesIO(content.encode("utf-8"))
-
             return StreamingResponse(
                 file_like,
                 media_type="text/plain",
-                headers={
-                    "Content-Disposition": 'attachment; filename="random.txt"'
-                },
+                headers={"Content-Disposition": 'attachment; filename="random.txt"'},
+            )
+
+        if self.rng.executed_images:
+            msg = MIMEMultipart("mixed")
+
+            # JSON часть
+            json_part = MIMEApplication(
+                json.dumps({
+                    "executed_sources": [source.model_dump() for source in self.rng.executed_sources],
+                    "seed": self.rng.bytes_to_bits(self.rng.seed),
+                    "result": random_result,
+                }),
+                "json"
+            )
+            json_part.add_header("Content-Disposition", "attachment", filename="result.json")
+            msg.attach(json_part)
+
+            for i, img_buf in enumerate(self.rng.executed_images, start=1):
+                img_part = MIMEApplication(img_buf.getvalue(), "png")
+                img_part.add_header("Content-Disposition", "attachment", filename=f"plot_{i}.png")
+                msg.attach(img_part)
+
+            return Response(
+                content=msg.as_bytes(),
+                media_type=f"multipart/mixed; boundary={msg.get_boundary()}"
             )
 
         return GeneratorResponseSchema(
