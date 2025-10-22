@@ -21,11 +21,9 @@ class RunsTest:
             significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
-        self.name = "Runs Test"
+        self.name = 'Runs Test'
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """
         Convert various input formats to a numpy array of integers (0s and 1s)
 
@@ -42,11 +40,11 @@ class RunsTest:
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _count_runs(self, sequence: np.ndarray) -> int:
         """
@@ -89,14 +87,14 @@ class RunsTest:
         tau = 2.0 / np.sqrt(n)
         if abs(pi - 0.5) >= tau:
             return {
-                "success": False,
-                "p_value": 0.0,
-                "statistics": {
-                    "n": n,
-                    "proportion_ones": pi,
-                    "tau": tau,
-                    "criteria_met": False,
-                    "error": "Pi estimator criteria not met",
+                'success': False,
+                'p_value': 0.0,
+                'statistics': {
+                    'n': n,
+                    'proportion_ones': pi,
+                    'tau': tau,
+                    'criteria_met': False,
+                    'error': 'Pi estimator criteria not met',
                 },
             }
 
@@ -117,19 +115,19 @@ class RunsTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "proportion_ones": pi,
-            "tau": tau,
-            "criteria_met": True,
-            "observed_runs": V_n_obs,
-            "expected_runs": exp_runs,
-            "test_statistic": erfc_arg,
+            'n': n,
+            'proportion_ones': pi,
+            'tau': tau,
+            'criteria_met': True,
+            'observed_runs': V_n_obs,
+            'expected_runs': exp_runs,
+            'test_statistic': erfc_arg,
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
@@ -142,7 +140,7 @@ class RunsTest:
         Returns:
             dict: Test results (same as test() method)
         """
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
@@ -157,46 +155,44 @@ def format_test_report(test_results: dict) -> str:
     Returns:
         str: Formatted report
     """
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
-    if not stats["criteria_met"]:
+    if not stats['criteria_met']:
         report = [
-            "RUNS TEST",
-            "-" * 45,
-            "PI ESTIMATOR CRITERIA NOT MET!",
-            f"Pi = {stats['proportion_ones']:.6f}",
-            f"Tau = {stats['tau']:.6f}",
-            "-" * 45,
-            "FAILURE",
-            "p_value = 0.000000\n",
+            'RUNS TEST',
+            '-' * 45,
+            'PI ESTIMATOR CRITERIA NOT MET!',
+            f'Pi = {stats["proportion_ones"]:.6f}',
+            f'Tau = {stats["tau"]:.6f}',
+            '-' * 45,
+            'FAILURE',
+            'p_value = 0.000000\n',
         ]
     else:
         report = [
-            "RUNS TEST",
-            "-" * 45,
-            "COMPUTATIONAL INFORMATION:",
-            "-" * 45,
-            f"(a) Pi (proportion of ones)      = {stats['proportion_ones']:.6f}",
-            f"(b) Tau (threshold)              = {stats['tau']:.6f}",
-            f"(c) Total number of runs         = {stats['observed_runs']}",
-            f"(d) Expected number of runs      = {stats['expected_runs']:.6f}",
-            f"(e) Test statistic               = {stats['test_statistic']:.6f}",
-            "-" * 45,
-            "SUCCESS" if test_results["success"] else "FAILURE",
-            f"p_value = {test_results['p_value']:.6f}\n",
+            'RUNS TEST',
+            '-' * 45,
+            'COMPUTATIONAL INFORMATION:',
+            '-' * 45,
+            f'(a) Pi (proportion of ones)      = {stats["proportion_ones"]:.6f}',
+            f'(b) Tau (threshold)              = {stats["tau"]:.6f}',
+            f'(c) Total number of runs         = {stats["observed_runs"]}',
+            f'(d) Expected number of runs      = {stats["expected_runs"]:.6f}',
+            f'(e) Test statistic               = {stats["test_statistic"]:.6f}',
+            '-' * 45,
+            'SUCCESS' if test_results['success'] else 'FAILURE',
+            f'p_value = {test_results["p_value"]:.6f}\n',
         ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Runs Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Runs Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

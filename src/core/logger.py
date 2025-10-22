@@ -17,17 +17,17 @@ def setup_logging(level: int | str) -> None:
 
     if env_config.LOG_TO_FILE:
         file_handler = RotatingFileHandler(
-            env_config.LOGS_DIR / f"{env_config.APP_NAME}.log",
+            env_config.LOGS_DIR / f'{env_config.APP_NAME}.log',
             maxBytes=10 * 1024 * 1024,
             backupCount=5,
-            encoding="utf-8",
+            encoding='utf-8',
         )
 
         file_handler.setLevel(level)
         handlers.append(file_handler)
 
     logging.basicConfig(
-        format="%(message)s",
+        format='%(message)s',
         handlers=handlers,
         level=level,
     )
@@ -35,11 +35,7 @@ def setup_logging(level: int | str) -> None:
 
 def get_logger(name: str, level: int | str = env_config.LOG_LEVEL) -> structlog.BoundLogger:
     setup_logging(level)
-    render_method = (
-        structlog.dev.ConsoleRenderer()
-        if env_config.DEBUG
-        else structlog.processors.JSONRenderer()
-    )
+    render_method = structlog.dev.ConsoleRenderer() if env_config.DEBUG else structlog.processors.JSONRenderer()
     structlog.configure(
         processors=[
             structlog.stdlib.add_log_level,
@@ -66,37 +62,31 @@ def get_logger(name: str, level: int | str = env_config.LOG_LEVEL) -> structlog.
     return structlog.get_logger(name)
 
 
-def mask_sensitive_data(
-    logger: structlog.BoundLogger, _method_name: str, event_dict: dict[str, Any]
-) -> Any:
+def mask_sensitive_data(logger: structlog.BoundLogger, _method_name: str, event_dict: dict[str, Any]) -> Any:
     """Recursively mask sensitive data"""
 
     def _mask_data(data: Any) -> Any:
         if isinstance(data, dict):
             result = {}
             for key, value in data.items():
-                if (
-                    isinstance(value, str)
-                    and value.startswith("{")
-                    and value.endswith("}")
-                ):
+                if isinstance(value, str) and value.startswith('{') and value.endswith('}'):
                     try:
                         result[key] = _mask_data(json.loads(value))
                     except json.JSONDecodeError as e:
                         logger.warning(
-                            f"Error masking data: {e}",
+                            f'Error masking data: {e}',
                             exc_info=e,
                         )
                         result[key] = value
                 elif key in env_config.SENSITIVE_DATA:
-                    result[key] = "SENSITIVE DATA"
-                elif key == "query":
-                    params = value.split("&")
-                    if len(params) == 0 or params[0] == "":
+                    result[key] = 'SENSITIVE DATA'
+                elif key == 'query':
+                    params = value.split('&')
+                    if len(params) == 0 or params[0] == '':
                         return data
                     temp = {}
                     for param in params:
-                        param_name, param_value = param.split("=")
+                        param_name, param_value = param.split('=')
                         temp[param_name] = param_value
                     result[key] = _mask_data(temp)
                 elif isinstance(value, dict | list):
@@ -110,7 +100,7 @@ def mask_sensitive_data(
 
         return data
 
-    if "context" in event_dict:
-        event_dict["context"] = _mask_data(event_dict["context"])
+    if 'context' in event_dict:
+        event_dict['context'] = _mask_data(event_dict['context'])
 
     return event_dict

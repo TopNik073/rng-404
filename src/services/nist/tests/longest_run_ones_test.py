@@ -32,14 +32,12 @@ class LongestRunsTest:
             significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
-        self.name = "Longest Runs of Ones Test"
+        self.name = 'Longest Runs of Ones Test'
 
         # Define configurations for different sequence lengths
         self.configs = {
-            "short": BlockConfig(
-                K=3, M=8, V=[1, 2, 3, 4], pi=[0.21484375, 0.3671875, 0.23046875, 0.1875]
-            ),
-            "medium": BlockConfig(
+            'short': BlockConfig(K=3, M=8, V=[1, 2, 3, 4], pi=[0.21484375, 0.3671875, 0.23046875, 0.1875]),
+            'medium': BlockConfig(
                 K=5,
                 M=128,
                 V=[4, 5, 6, 7, 8, 9],
@@ -52,7 +50,7 @@ class LongestRunsTest:
                     0.112398847,
                 ],
             ),
-            "long": BlockConfig(
+            'long': BlockConfig(
                 K=6,
                 M=10000,
                 V=[10, 11, 12, 13, 14, 15, 16],
@@ -60,39 +58,35 @@ class LongestRunsTest:
             ),
         }
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _get_config(self, n: int) -> BlockConfig:
         """Get the appropriate configuration based on sequence length"""
         if n < 128:  # noqa
-            raise ValueError(f"Sequence length {n} is too short (minimum 128)")
+            raise ValueError(f'Sequence length {n} is too short (minimum 128)')
         if n < 6272:  # noqa
-            return self.configs["short"]
+            return self.configs['short']
         if n < 750000:  # noqa
-            return self.configs["medium"]
-        return self.configs["long"]
+            return self.configs['medium']
+        return self.configs['long']
 
     def _find_longest_run_in_block(self, block: np.ndarray) -> int:
         """Find the longest run of ones in a block"""
         # Convert to string and split by zeros
-        runs = "".join(map(str, block)).split("0")
+        runs = ''.join(map(str, block)).split('0')
         # Return length of longest run
         return max(len(run) for run in runs) if runs else 0
 
-    def _count_frequencies(
-        self, sequence: np.ndarray, config: BlockConfig
-    ) -> tuple[list[int], int]:
+    def _count_frequencies(self, sequence: np.ndarray, config: BlockConfig) -> tuple[list[int], int]:
         """Count frequencies of different run lengths in blocks"""
         N = len(sequence) // config.M  # Number of blocks
         nu = np.zeros(config.K + 1, dtype=int)
@@ -137,9 +131,9 @@ class LongestRunsTest:
             config = self._get_config(n)
         except ValueError as e:
             return {
-                "success": False,
-                "p_value": 0.0,
-                "statistics": {"error": str(e), "n": n},
+                'success': False,
+                'p_value': 0.0,
+                'statistics': {'error': str(e), 'n': n},
             }
 
         # Count frequencies
@@ -158,80 +152,78 @@ class LongestRunsTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "block_size": config.M,
-            "num_blocks": N,
-            "chi_squared": chi_squared,
-            "degrees_of_freedom": config.K,
-            "frequencies": nu.tolist(),
-            "expected_frequencies": expected.tolist(),
-            "run_length_categories": config.V,
+            'n': n,
+            'block_size': config.M,
+            'num_blocks': N,
+            'chi_squared': chi_squared,
+            'degrees_of_freedom': config.K,
+            'frequencies': nu.tolist(),
+            'expected_frequencies': expected.tolist(),
+            'run_length_categories': config.V,
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Longest Runs Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
-    if "error" in stats:
-        return f"\nLONGEST RUNS OF ONES TEST\n{'-' * 45}\nERROR: {stats['error']}\n"
+    if 'error' in stats:
+        return f'\nLONGEST RUNS OF ONES TEST\n{"-" * 45}\nERROR: {stats["error"]}\n'
 
     report = [
-        "\nLONGEST RUNS OF ONES TEST",
-        "-" * 45,
-        "COMPUTATIONAL INFORMATION:",
-        "-" * 45,
-        f"(a) N (# of blocks)     = {stats['num_blocks']}",
-        f"(b) M (Block length)    = {stats['block_size']}",
-        f"(c) Chi^2               = {stats['chi_squared']:.6f}",
-        "-" * 45,
-        "      F R E Q U E N C Y",
-        "-" * 45,
+        '\nLONGEST RUNS OF ONES TEST',
+        '-' * 45,
+        'COMPUTATIONAL INFORMATION:',
+        '-' * 45,
+        f'(a) N (# of blocks)     = {stats["num_blocks"]}',
+        f'(b) M (Block length)    = {stats["block_size"]}',
+        f'(c) Chi^2               = {stats["chi_squared"]:.6f}',
+        '-' * 45,
+        '      F R E Q U E N C Y',
+        '-' * 45,
     ]
 
     # Add frequency table header based on block size
-    if stats["block_size"] == 8:  # noqa
-        report.append("  <=1     2     3    >=4   P-value  Assignment")
-    elif stats["block_size"] == 128:  # noqa
-        report.append("  <=4  5  6  7  8  >=9 P-value  Assignment")
+    if stats['block_size'] == 8:  # noqa
+        report.append('  <=1     2     3    >=4   P-value  Assignment')
+    elif stats['block_size'] == 128:  # noqa
+        report.append('  <=4  5  6  7  8  >=9 P-value  Assignment')
     else:
-        report.append("  <=10  11  12  13  14  15 >=16 P-value  Assignment")
+        report.append('  <=10  11  12  13  14  15 >=16 P-value  Assignment')
 
     # Add frequencies
-    freq_str = "  " + "  ".join(f"{f:3d}" for f in stats["frequencies"])
+    freq_str = '  ' + '  '.join(f'{f:3d}' for f in stats['frequencies'])
     report.append(freq_str)
 
     # Add result
     report.extend(
         [
-            f"{'SUCCESS' if test_results['success'] else 'FAILURE'}",
-            f"p_value = {test_results['p_value']:.6f}\n",
+            f'{"SUCCESS" if test_results["success"] else "FAILURE"}',
+            f'p_value = {test_results["p_value"]:.6f}\n',
         ]
     )
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Longest Runs of Ones Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Longest Runs of Ones Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

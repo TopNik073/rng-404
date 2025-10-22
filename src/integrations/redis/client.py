@@ -1,6 +1,7 @@
 import redis
 import json
 
+
 class RedisClient:
     def __init__(self, url):
         self.client: redis.asyncio.Redis = redis.asyncio.from_url(url, decode_responses=True)

@@ -23,20 +23,18 @@ class SerialTest:
         """
         self.pattern_length = pattern_length
         self.significance_level = significance_level
-        self.name = "Serial Test"
+        self.name = 'Serial Test'
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _psi2(self, m: int, sequence: np.ndarray) -> float:
         """
@@ -72,7 +70,6 @@ class SerialTest:
         relevant_counts = pattern_counts[2**m - 1 : 2 ** (m + 1) - 1]
         return (2**m / n) * np.sum(relevant_counts**2) - n
 
-
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
         Run the Serial Test
@@ -94,9 +91,9 @@ class SerialTest:
         # Check if we have enough data
         if n < 2**m:
             return {
-                "success": False,
-                "error": f"Insufficient data. Need at least 2^{m} bits.",
-                "statistics": {"n": n, "m": m},
+                'success': False,
+                'error': f'Insufficient data. Need at least 2^{m} bits.',
+                'statistics': {'n': n, 'm': m},
             }
 
         # Calculate ψ² statistics for m, m-1, and m-2
@@ -114,79 +111,72 @@ class SerialTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "m": m,
-            "psi_m": psim0,
-            "psi_m_minus_1": psim1,
-            "psi_m_minus_2": psim2,
-            "del1": del1,
-            "del2": del2,
+            'n': n,
+            'm': m,
+            'psi_m': psim0,
+            'psi_m_minus_1': psim1,
+            'psi_m_minus_2': psim2,
+            'del1': del1,
+            'del2': del2,
         }
 
         return {
-            "success": bool(
-                p_value1 >= self.significance_level
-                and p_value2 >= self.significance_level
-            ),
-            "p_value1": float(p_value1),
-            "p_value2": float(p_value2),
-            "statistics": stats,
+            'success': bool(p_value1 >= self.significance_level and p_value2 >= self.significance_level),
+            'p_value1': float(p_value1),
+            'p_value2': float(p_value2),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Serial Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
+    if 'error' in test_results:
         return (
-            "\n\t\t\tSERIAL TEST\n"
-            "\t\t---------------------------------------------\n"
-            f"ERROR: {test_results['error']}\n"
+            f'\n\t\t\tSERIAL TEST\n\t\t---------------------------------------------\nERROR: {test_results["error"]}\n'
         )
 
-    stats = test_results["statistics"]
-    status1 = "SUCCESS" if test_results["p_value1"] >= 0.01 else "FAILURE"  # noqa
-    status2 = "SUCCESS" if test_results["p_value2"] >= 0.01 else "FAILURE"  # noqa
+    stats = test_results['statistics']
+    status1 = 'SUCCESS' if test_results['p_value1'] >= 0.01 else 'FAILURE'  # noqa
+    status2 = 'SUCCESS' if test_results['p_value2'] >= 0.01 else 'FAILURE'  # noqa
 
     report = [
-        "\n\t\t\tSERIAL TEST",
-        "\t\t---------------------------------------------",
-        "\t\t COMPUTATIONAL INFORMATION:",
-        "\t\t---------------------------------------------",
-        f"\t\t(a) Block length    (m) = {stats['m']}",
-        f"\t\t(b) Sequence length (n) = {stats['n']}",
-        f"\t\t(c) Psi_m               = {stats['psi_m']:.6f}",
-        f"\t\t(d) Psi_m-1             = {stats['psi_m_minus_1']:.6f}",
-        f"\t\t(e) Psi_m-2             = {stats['psi_m_minus_2']:.6f}",
-        f"\t\t(f) Del_1               = {stats['del1']:.6f}",
-        f"\t\t(g) Del_2               = {stats['del2']:.6f}",
-        "\t\t---------------------------------------------",
-        f"{status1}\t\tp_value1 = {test_results['p_value1']:.6f}",
-        f"{status2}\t\tp_value2 = {test_results['p_value2']:.6f}\n",
+        '\n\t\t\tSERIAL TEST',
+        '\t\t---------------------------------------------',
+        '\t\t COMPUTATIONAL INFORMATION:',
+        '\t\t---------------------------------------------',
+        f'\t\t(a) Block length    (m) = {stats["m"]}',
+        f'\t\t(b) Sequence length (n) = {stats["n"]}',
+        f'\t\t(c) Psi_m               = {stats["psi_m"]:.6f}',
+        f'\t\t(d) Psi_m-1             = {stats["psi_m_minus_1"]:.6f}',
+        f'\t\t(e) Psi_m-2             = {stats["psi_m_minus_2"]:.6f}',
+        f'\t\t(f) Del_1               = {stats["del1"]:.6f}',
+        f'\t\t(g) Del_2               = {stats["del2"]:.6f}',
+        '\t\t---------------------------------------------',
+        f'{status1}\t\tp_value1 = {test_results["p_value1"]:.6f}',
+        f'{status2}\t\tp_value2 = {test_results["p_value2"]:.6f}\n',
     ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Serial Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
+    parser = argparse.ArgumentParser(description='NIST Serial Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
     parser.add_argument(
-        "--pattern-length",
+        '--pattern-length',
         type=int,
         default=16,
-        help="Length m of each pattern (default: 16)",
+        help='Length m of each pattern (default: 16)',
     )
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

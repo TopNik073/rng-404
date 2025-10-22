@@ -21,7 +21,7 @@ class UniversalTest:
             significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
-        self.name = "Universal Statistical Test"
+        self.name = 'Universal Statistical Test'
 
         # Pre-computed expected values for L=6 to L=16 (indexes 0-5 are unused)
         self.expected_value = np.array(
@@ -69,18 +69,16 @@ class UniversalTest:
             ]
         )
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _determine_block_size(self, n: int) -> int:
         """
@@ -151,20 +149,17 @@ class UniversalTest:
         # Validate parameters
         if L < 6 or L > 16 or Q < 10 * 2**L:  # noqa
             return {
-                "success": False,
-                "error": (
-                    f"Invalid parameters: L={L} must be between 6 and 16, "
-                    f"and Q={Q} must be >= {10 * 2**L}"
-                ),
-                "statistics": {"n": n, "L": L, "Q": Q, "K": K},
+                'success': False,
+                'error': (f'Invalid parameters: L={L} must be between 6 and 16, and Q={Q} must be >= {10 * 2**L}'),
+                'statistics': {'n': n, 'L': L, 'Q': Q, 'K': K},
             }
 
         # Ensure sequence length is sufficient
         if n < (Q + K) * L:
             return {
-                "success": False,
-                "error": f"Insufficient sequence length. Need at least {(Q + K) * L} bits.",
-                "statistics": {"n": n, "L": L, "Q": Q, "K": K},
+                'success': False,
+                'error': f'Insufficient sequence length. Need at least {(Q + K) * L} bits.',
+                'statistics': {'n': n, 'L': L, 'Q': Q, 'K': K},
             }
 
         # Initialize table
@@ -172,9 +167,7 @@ class UniversalTest:
         T = np.zeros(p, dtype=np.int64)
 
         # Convert sequence to array of integers
-        int_sequence = self._blocks_to_integers(
-            sequence[: (Q + K) * L].reshape(-1, L), L
-        )
+        int_sequence = self._blocks_to_integers(sequence[: (Q + K) * L].reshape(-1, L), L)
 
         # Initialize table with the first Q blocks
         for i in range(Q):
@@ -199,72 +192,70 @@ class UniversalTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "L": L,
-            "Q": Q,
-            "K": K,
-            "sum": sum_log,
-            "sigma": sigma,
-            "variance": self.variance[L],
-            "expected_value": self.expected_value[L],
-            "phi": phi,
-            "bits_discarded": n - (Q + K) * L,
+            'n': n,
+            'L': L,
+            'Q': Q,
+            'K': K,
+            'sum': sum_log,
+            'sigma': sigma,
+            'variance': self.variance[L],
+            'expected_value': self.expected_value[L],
+            'phi': phi,
+            'bits_discarded': n - (Q + K) * L,
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Universal Statistical Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
+    if 'error' in test_results:
         return (
-            "\n\t\tUNIVERSAL STATISTICAL TEST\n"
-            "\t\t--------------------------------------------\n"
-            f"\t\tERROR: {test_results['error']}\n"
+            '\n\t\tUNIVERSAL STATISTICAL TEST\n'
+            '\t\t--------------------------------------------\n'
+            f'\t\tERROR: {test_results["error"]}\n'
         )
 
-    stats = test_results["statistics"]
-    status = "SUCCESS" if test_results["success"] else "FAILURE"
+    stats = test_results['statistics']
+    status = 'SUCCESS' if test_results['success'] else 'FAILURE'
 
     report = [
-        "\n\t\tUNIVERSAL STATISTICAL TEST",
-        "\t\t--------------------------------------------",
-        "\t\tCOMPUTATIONAL INFORMATION:",
-        "\t\t--------------------------------------------",
-        f"\t\t(a) L         = {stats['L']}",
-        f"\t\t(b) Q         = {stats['Q']}",
-        f"\t\t(c) K         = {stats['K']}",
-        f"\t\t(d) sum       = {stats['sum']:.6f}",
-        f"\t\t(e) sigma     = {stats['sigma']:.6f}",
-        f"\t\t(f) variance  = {stats['variance']:.6f}",
-        f"\t\t(g) exp_value = {stats['expected_value']:.6f}",
-        f"\t\t(h) phi       = {stats['phi']:.6f}",
-        f"\t\t(i) WARNING:  {stats['bits_discarded']} bits were discarded.",
-        "\t\t-----------------------------------------",
-        f"\t\tp_value = {test_results['p_value']:.6f} {status}\n",
+        '\n\t\tUNIVERSAL STATISTICAL TEST',
+        '\t\t--------------------------------------------',
+        '\t\tCOMPUTATIONAL INFORMATION:',
+        '\t\t--------------------------------------------',
+        f'\t\t(a) L         = {stats["L"]}',
+        f'\t\t(b) Q         = {stats["Q"]}',
+        f'\t\t(c) K         = {stats["K"]}',
+        f'\t\t(d) sum       = {stats["sum"]:.6f}',
+        f'\t\t(e) sigma     = {stats["sigma"]:.6f}',
+        f'\t\t(f) variance  = {stats["variance"]:.6f}',
+        f'\t\t(g) exp_value = {stats["expected_value"]:.6f}',
+        f'\t\t(h) phi       = {stats["phi"]:.6f}',
+        f'\t\t(i) WARNING:  {stats["bits_discarded"]} bits were discarded.',
+        '\t\t-----------------------------------------',
+        f'\t\tp_value = {test_results["p_value"]:.6f} {status}\n',
     ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Universal Statistical Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Universal Statistical Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

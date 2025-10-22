@@ -20,7 +20,7 @@ class RandomExcursionsTest:
             significance_level: The significance level. Default is 0.01 (1%)
         """
         self.significance_level = significance_level
-        self.name = "Random Excursions Test"
+        self.name = 'Random Excursions Test'
 
         # States to examine
         self.state_x = np.array([-4, -3, -2, -1, 1, 2, 3, 4])
@@ -72,18 +72,16 @@ class RandomExcursionsTest:
             ]
         )
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _find_cycles(self, cumsum: np.ndarray) -> np.ndarray:
         """Find indices where cumulative sum returns to zero (cycle endpoints)"""
@@ -129,9 +127,9 @@ class RandomExcursionsTest:
         constraint = max(0.005 * np.sqrt(n), 500)
         if constraint > J:
             return {
-                "success": False,
-                "error": "Insufficient number of cycles",
-                "statistics": {"n": n, "num_cycles": J, "constraint": constraint},
+                'success': False,
+                'error': 'Insufficient number of cycles',
+                'statistics': {'n': n, 'num_cycles': J, 'constraint': constraint},
             }
 
         # Initialize visit state counts
@@ -183,78 +181,74 @@ class RandomExcursionsTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "num_cycles": J,
-            "chi_squared": chi_squares,
-            "states": self.state_x.tolist(),
-            "visit_counts": nu.tolist(),
-            "constraint": constraint,
+            'n': n,
+            'num_cycles': J,
+            'chi_squared': chi_squares,
+            'states': self.state_x.tolist(),
+            'visit_counts': nu.tolist(),
+            'constraint': constraint,
         }
 
         return {
-            "success": all(p >= self.significance_level for p in p_values),
-            "p_values": float(p_values),
-            "statistics": stats,
+            'success': all(p >= self.significance_level for p in p_values),
+            'p_values': float(p_values),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Random Excursions Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
+    if 'error' in test_results:
         return (
-            "\n\t\t\t  RANDOM EXCURSIONS TEST\n"
-            "\t\t--------------------------------------------\n"
-            "\t\tCOMPUTATIONAL INFORMATION:\n"
-            "\t\t--------------------------------------------\n"
-            f"\t\t(a) Number Of Cycles (J) = {test_results['statistics']['num_cycles']:04d}\n"
-            f"\t\t(b) Sequence Length (n)  = {test_results['statistics']['n']}\n"
-            "\t\t---------------------------------------------\n"
-            "\t\tWARNING:  TEST NOT APPLICABLE.  THERE ARE AN\n"
-            "\t\t\t  INSUFFICIENT NUMBER OF CYCLES.\n"
-            "\t\t---------------------------------------------\n"
+            '\n\t\t\t  RANDOM EXCURSIONS TEST\n'
+            '\t\t--------------------------------------------\n'
+            '\t\tCOMPUTATIONAL INFORMATION:\n'
+            '\t\t--------------------------------------------\n'
+            f'\t\t(a) Number Of Cycles (J) = {test_results["statistics"]["num_cycles"]:04d}\n'
+            f'\t\t(b) Sequence Length (n)  = {test_results["statistics"]["n"]}\n'
+            '\t\t---------------------------------------------\n'
+            '\t\tWARNING:  TEST NOT APPLICABLE.  THERE ARE AN\n'
+            '\t\t\t  INSUFFICIENT NUMBER OF CYCLES.\n'
+            '\t\t---------------------------------------------\n'
         )
 
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
     report = [
-        "\n\t\t\t  RANDOM EXCURSIONS TEST",
-        "\t\t--------------------------------------------",
-        "\t\tCOMPUTATIONAL INFORMATION:",
-        "\t\t--------------------------------------------",
-        f"\t\t(a) Number Of Cycles (J) = {stats['num_cycles']:04d}",
-        f"\t\t(b) Sequence Length (n)  = {stats['n']}",
-        f"\t\t(c) Rejection Constraint = {stats['constraint']:.6f}",
-        "\t\t-------------------------------------------",
+        '\n\t\t\t  RANDOM EXCURSIONS TEST',
+        '\t\t--------------------------------------------',
+        '\t\tCOMPUTATIONAL INFORMATION:',
+        '\t\t--------------------------------------------',
+        f'\t\t(a) Number Of Cycles (J) = {stats["num_cycles"]:04d}',
+        f'\t\t(b) Sequence Length (n)  = {stats["n"]}',
+        f'\t\t(c) Rejection Constraint = {stats["constraint"]:.6f}',
+        '\t\t-------------------------------------------',
     ]
 
     for _i, (state, p_value, chi_square) in enumerate(
-        zip(stats["states"], test_results["p_values"], stats["chi_squared"], strict=False)
+        zip(stats['states'], test_results['p_values'], stats['chi_squared'], strict=False)
     ):
-        status = "SUCCESS" if p_value >= 0.01 else "FAILURE"  # noqa
+        status = 'SUCCESS' if p_value >= 0.01 else 'FAILURE'  # noqa
         if not (0 <= p_value <= 1):
-            report.append("\t\tWARNING:  P_VALUE IS OUT OF RANGE")
-        report.append(
-            f"{status}\t\tx = {state:2d} chi^2 = {chi_square:9.6f} p_value = {p_value:f}"
-        )
+            report.append('\t\tWARNING:  P_VALUE IS OUT OF RANGE')
+        report.append(f'{status}\t\tx = {state:2d} chi^2 = {chi_square:9.6f} p_value = {p_value:f}')
 
-    report.append("")
-    return "\n".join(report)
+    report.append('')
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Random Excursions Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser = argparse.ArgumentParser(description='NIST Random Excursions Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 

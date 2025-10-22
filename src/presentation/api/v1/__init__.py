@@ -7,5 +7,5 @@ v1_router.include_router(rng_router)
 v1_router.include_router(nist_router)
 
 __all__ = [
-    "v1_router",
+    'v1_router',
 ]

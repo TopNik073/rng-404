@@ -22,28 +22,24 @@ class LinearComplexityTest:
         """
         self.block_size = block_size
         self.significance_level = significance_level
-        self.name = "Linear Complexity Test"
+        self.name = 'Linear Complexity Test'
 
         # Number of degrees of freedom (categories)
         self.K = 6
 
         # Probabilities for the K+1 degrees of freedom (from NIST implementation)
-        self.pi = np.array(
-            [0.01047, 0.03125, 0.12500, 0.50000, 0.25000, 0.06250, 0.020833]
-        )
+        self.pi = np.array([0.01047, 0.03125, 0.12500, 0.50000, 0.25000, 0.06250, 0.020833])
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _berlekamp_massey(self, block: np.ndarray) -> int:
         """
@@ -111,9 +107,9 @@ class LinearComplexityTest:
         N = n // self.block_size
         if N == 0:
             return {
-                "success": False,
-                "error": f"Insufficient data. Need at least {self.block_size} bits.",
-                "statistics": {"n": n, "block_size": self.block_size},
+                'success': False,
+                'error': f'Insufficient data. Need at least {self.block_size} bits.',
+                'statistics': {'n': n, 'block_size': self.block_size},
             }
 
         # Initialize frequency array for the K+1 bins
@@ -131,28 +127,24 @@ class LinearComplexityTest:
             M = self.block_size
             parity = (M + 1) % 2
             sign = 1 if parity == 0 else -1
-            mean = (
-                M / 2.0
-                + (9.0 + sign) / 36.0
-                - (1.0 / pow(2, M)) * (M / 3.0 + 2.0 / 9.0)
-            )
+            mean = M / 2.0 + (9.0 + sign) / 36.0 - (1.0 / pow(2, M)) * (M / 3.0 + 2.0 / 9.0)
 
             # Calculate T value
             sign = 1 if M % 2 == 0 else -1
             T = sign * (L - mean) + 2.0 / 9.0
 
             # Assign to appropriate bin
-            if T <= -2.5:  #noqa
+            if T <= -2.5:  # noqa
                 nu[0] += 1
-            elif T <= -1.5:  #noqa
+            elif T <= -1.5:  # noqa
                 nu[1] += 1
-            elif T <= -0.5:  #noqa
+            elif T <= -0.5:  # noqa
                 nu[2] += 1
-            elif T <= 0.5:  #noqa
+            elif T <= 0.5:  # noqa
                 nu[3] += 1
-            elif T <= 1.5:  #noqa
+            elif T <= 1.5:  # noqa
                 nu[4] += 1
-            elif T <= 2.5:  #noqa
+            elif T <= 2.5:  # noqa
                 nu[5] += 1
             else:
                 nu[6] += 1
@@ -165,85 +157,79 @@ class LinearComplexityTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "block_size": self.block_size,
-            "num_blocks": N,
-            "chi_squared": chi_squared,
-            "frequencies": nu.tolist(),
-            "expected_frequencies": (N * self.pi).tolist(),
-            "bits_discarded": n % self.block_size,
+            'n': n,
+            'block_size': self.block_size,
+            'num_blocks': N,
+            'chi_squared': chi_squared,
+            'frequencies': nu.tolist(),
+            'expected_frequencies': (N * self.pi).tolist(),
+            'bits_discarded': n % self.block_size,
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Linear Complexity Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
+    if 'error' in test_results:
         return (
-            "\n\t\tLINEAR COMPLEXITY TEST\n"
-            "-----------------------------------------------------\n"
-            f"ERROR: {test_results['error']}\n"
+            '\n\t\tLINEAR COMPLEXITY TEST\n'
+            '-----------------------------------------------------\n'
+            f'ERROR: {test_results["error"]}\n'
         )
 
-    stats = test_results["statistics"]
+    stats = test_results['statistics']
 
     report = [
-        "\n-----------------------------------------------------",
-        "\tL I N E A R  C O M P L E X I T Y",
-        "-----------------------------------------------------",
-        f"\tM (substring length)     = {stats['block_size']}",
-        f"\tN (number of substrings) = {stats['num_blocks']}",
-        "-----------------------------------------------------",
-        "        F R E Q U E N C Y",
-        "-----------------------------------------------------",
-        "  C0   C1   C2   C3   C4   C5   C6    CHI2    P-value",
-        "-----------------------------------------------------",
+        '\n-----------------------------------------------------',
+        '\tL I N E A R  C O M P L E X I T Y',
+        '-----------------------------------------------------',
+        f'\tM (substring length)     = {stats["block_size"]}',
+        f'\tN (number of substrings) = {stats["num_blocks"]}',
+        '-----------------------------------------------------',
+        '        F R E Q U E N C Y',
+        '-----------------------------------------------------',
+        '  C0   C1   C2   C3   C4   C5   C6    CHI2    P-value',
+        '-----------------------------------------------------',
     ]
 
     # Format frequencies
-    freq_str = " ".join(f"{int(f):4d}" for f in stats["frequencies"])
-    report.append(
-        f"{freq_str} {stats['chi_squared']:9.6f} {test_results['p_value']:9.6f}"
-    )
+    freq_str = ' '.join(f'{int(f):4d}' for f in stats['frequencies'])
+    report.append(f'{freq_str} {stats["chi_squared"]:9.6f} {test_results["p_value"]:9.6f}')
 
-    if stats["bits_discarded"] > 0:
-        report.append(f"\tNote: {stats['bits_discarded']} bits were discarded!")
+    if stats['bits_discarded'] > 0:
+        report.append(f'\tNote: {stats["bits_discarded"]} bits were discarded!')
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Linear Complexity Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
+    parser = argparse.ArgumentParser(description='NIST Linear Complexity Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
     parser.add_argument(
-        "--block-size",
+        '--block-size',
         type=int,
         default=500,
-        help="Length M of each block (default: 500)",
+        help='Length M of each block (default: 500)',
     )
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 
     # Run test
-    test = LinearComplexityTest(
-        block_size=args.block_size, significance_level=args.alpha
-    )
+    test = LinearComplexityTest(block_size=args.block_size, significance_level=args.alpha)
     results = test.test_file(args.file)
 
     # Print report

@@ -22,29 +22,25 @@ class OverlappingTemplateTest:
         """
         self.template_length = template_length
         self.significance_level = significance_level
-        self.name = "Overlapping Template Test"
+        self.name = 'Overlapping Template Test'
 
         # Test parameters (as defined in NIST paper)
         self.M = 1032  # Length of each substring
         self.K = 5  # Number of degrees of freedom (categories)
 
         # Default probabilities for K=5 (from NIST implementation)
-        self.pi = np.array(
-            [0.364091, 0.185659, 0.139381, 0.100571, 0.0704323, 0.139865]
-        )
+        self.pi = np.array([0.364091, 0.185659, 0.139381, 0.100571, 0.0704323, 0.139865])
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
     def _compute_probability(self, u: int, eta: float) -> float:
         """
@@ -64,21 +60,13 @@ class OverlappingTemplateTest:
         log_sum = -np.inf  # Initialize to log(0)
         for l in range(1, u + 1):
             log_term = (
-                -eta
-                - u * np.log(2)
-                + l * np.log(eta)
-                - gammaln(l + 1)
-                + gammaln(u)
-                - gammaln(l)
-                - gammaln(u - l + 1)
+                -eta - u * np.log(2) + l * np.log(eta) - gammaln(l + 1) + gammaln(u) - gammaln(l) - gammaln(u - l + 1)
             )
             log_sum = np.logaddexp(log_sum, log_term)
 
         return np.exp(log_sum)
 
-    def _count_matches(
-        self, sequence: np.ndarray, block_start: int, template: np.ndarray
-    ) -> int:
+    def _count_matches(self, sequence: np.ndarray, block_start: int, template: np.ndarray) -> int:
         """
         Count overlapping matches in a block as per NIST SP 800-22 2.8.4
         The window slides over one bit after each examination.
@@ -128,9 +116,9 @@ class OverlappingTemplateTest:
 
         if N == 0:
             return {
-                "success": False,
-                "error": f"Input sequence too short. Length must be at least {self.M}",
-                "statistics": {"n": n},
+                'success': False,
+                'error': f'Input sequence too short. Length must be at least {self.M}',
+                'statistics': {'n': n},
             }
 
         # Create template (default is all ones)
@@ -139,7 +127,7 @@ class OverlappingTemplateTest:
         else:
             template = self._convert_to_binary_list(template)
             if len(template) != self.template_length:
-                raise ValueError(f"Template length must be {self.template_length}")
+                raise ValueError(f'Template length must be {self.template_length}')
 
         # Calculate test parameters
         lambda_val = (self.M - self.template_length + 1) / (2**self.template_length)
@@ -167,88 +155,79 @@ class OverlappingTemplateTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "M": self.M,
-            "N": N,
-            "template_length": self.template_length,
-            "lambda": lambda_val,
-            "eta": eta,
-            "chi_squared": chi_squared,
-            "frequencies": nu.tolist(),
-            "template": template.tolist(),
+            'n': n,
+            'M': self.M,
+            'N': N,
+            'template_length': self.template_length,
+            'lambda': lambda_val,
+            'eta': eta,
+            'chi_squared': chi_squared,
+            'frequencies': nu.tolist(),
+            'template': template.tolist(),
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Overlapping Template Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
-        return (
-            "\nOVERLAPPING TEMPLATE OF ALL ONES TEST\n"
-            + "-" * 45
-            + "\n"
-            + f"ERROR: {test_results['error']}\n"
-        )
+    if 'error' in test_results:
+        return '\nOVERLAPPING TEMPLATE OF ALL ONES TEST\n' + '-' * 45 + '\n' + f'ERROR: {test_results["error"]}\n'
 
-    stats = test_results["statistics"]
-    result = "SUCCESS" if test_results["success"] else "FAILURE"
+    stats = test_results['statistics']
+    result = 'SUCCESS' if test_results['success'] else 'FAILURE'
 
     report = [
-        "\n\t\tOVERLAPPING TEMPLATE OF ALL ONES TEST",
-        "\t\t-----------------------------------------------",
-        "\t\tCOMPUTATIONAL INFORMATION:",
-        "\t\t-----------------------------------------------",
-        f"\t\t(a) n (sequence_length)      = {stats['n']}",
-        f"\t\t(b) m (block length of 1s)   = {stats['template_length']}",
-        f"\t\t(c) M (length of substring)  = {stats['M']}",
-        f"\t\t(d) N (number of substrings) = {stats['N']}",
-        f"\t\t(e) lambda [(M-m+1)/2^m]     = {stats['lambda']:.6f}",
-        f"\t\t(f) eta                      = {stats['eta']:.6f}",
-        "\t\t-----------------------------------------------",
-        "\t\t   F R E Q U E N C Y",
-        "\t\t  0   1   2   3   4  ≥5   Chi^2   P-value  Assignment",
-        "\t\t-----------------------------------------------",
-        f"\t\t{stats['frequencies'][0]:3d} {stats['frequencies'][1]:3d} "
-        f"{stats['frequencies'][2]:3d} {stats['frequencies'][3]:3d} "
-        f"{stats['frequencies'][4]:3d} {stats['frequencies'][5]:3d}  "
-        f"{stats['chi_squared']:f} {test_results['p_value']:.6f} {result}",
+        '\n\t\tOVERLAPPING TEMPLATE OF ALL ONES TEST',
+        '\t\t-----------------------------------------------',
+        '\t\tCOMPUTATIONAL INFORMATION:',
+        '\t\t-----------------------------------------------',
+        f'\t\t(a) n (sequence_length)      = {stats["n"]}',
+        f'\t\t(b) m (block length of 1s)   = {stats["template_length"]}',
+        f'\t\t(c) M (length of substring)  = {stats["M"]}',
+        f'\t\t(d) N (number of substrings) = {stats["N"]}',
+        f'\t\t(e) lambda [(M-m+1)/2^m]     = {stats["lambda"]:.6f}',
+        f'\t\t(f) eta                      = {stats["eta"]:.6f}',
+        '\t\t-----------------------------------------------',
+        '\t\t   F R E Q U E N C Y',
+        '\t\t  0   1   2   3   4  ≥5   Chi^2   P-value  Assignment',
+        '\t\t-----------------------------------------------',
+        f'\t\t{stats["frequencies"][0]:3d} {stats["frequencies"][1]:3d} '
+        f'{stats["frequencies"][2]:3d} {stats["frequencies"][3]:3d} '
+        f'{stats["frequencies"][4]:3d} {stats["frequencies"][5]:3d}  '
+        f'{stats["chi_squared"]:f} {test_results["p_value"]:.6f} {result}',
     ]
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Overlapping Template Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
+    parser = argparse.ArgumentParser(description='NIST Overlapping Template Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
     parser.add_argument(
-        "--template-length",
+        '--template-length',
         type=int,
         default=9,
-        help="Length of template (default: 9)",
+        help='Length of template (default: 9)',
     )
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 
     # Run test
-    test = OverlappingTemplateTest(
-        template_length=args.template_length, significance_level=args.alpha
-    )
+    test = OverlappingTemplateTest(template_length=args.template_length, significance_level=args.alpha)
     results = test.test_file(args.file)
 
     # Print report

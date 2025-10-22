@@ -23,24 +23,20 @@ class ApproximateEntropyTest:
         """
         self.block_length = block_length
         self.significance_level = significance_level
-        self.name = "Approximate Entropy Test"
+        self.name = 'Approximate Entropy Test'
 
-    def _convert_to_binary_list(
-        self, input_data: str | bytes | list[int] | np.ndarray
-    ) -> np.ndarray:
+    def _convert_to_binary_list(self, input_data: str | bytes | list[int] | np.ndarray) -> np.ndarray:
         """Convert various input formats to a numpy array of integers (0s and 1s)"""
         if isinstance(input_data, str):
             return np.array([int(bit) for bit in input_data])
         if isinstance(input_data, bytes):
-            binary_str = "".join(format(byte, "08b") for byte in input_data)
+            binary_str = ''.join(format(byte, '08b') for byte in input_data)
             return np.array([int(bit) for bit in binary_str])
         if isinstance(input_data, (list, np.ndarray)):
             return np.array(input_data)
-        raise ValueError("Unsupported input format")
+        raise ValueError('Unsupported input format')
 
-    def _compute_frequency(
-        self, sequence: np.ndarray, block_size: int
-    ) -> tuple[np.ndarray, int]:
+    def _compute_frequency(self, sequence: np.ndarray, block_size: int) -> tuple[np.ndarray, int]:
         """
         Compute frequencies of all possible patterns of given block size
 
@@ -70,9 +66,7 @@ class ApproximateEntropyTest:
 
         return pattern_counts, power_len
 
-    def _compute_entropy(
-        self, frequencies: np.ndarray, seq_length: int, block_size: int
-    ) -> float:
+    def _compute_entropy(self, frequencies: np.ndarray, seq_length: int, block_size: int) -> float:
         """
         Compute entropy value for given frequencies
 
@@ -95,10 +89,7 @@ class ApproximateEntropyTest:
             return 0.0
 
         # Calculate entropy sum
-        return (
-            np.sum(non_zero_freq * np.log(non_zero_freq / seq_length)) / seq_length
-        )
-
+        return np.sum(non_zero_freq * np.log(non_zero_freq / seq_length)) / seq_length
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -121,12 +112,12 @@ class ApproximateEntropyTest:
         # Check if we have enough data and valid block size
         if m > int(np.log2(n) - 5):
             return {
-                "success": False,
-                "error": (
-                    f"Block size {m} exceeds recommended value of "
-                    f"{max(1, int(np.log2(n) - 5))}. Results may be inaccurate."
+                'success': False,
+                'error': (
+                    f'Block size {m} exceeds recommended value of '
+                    f'{max(1, int(np.log2(n) - 5))}. Results may be inaccurate.'
                 ),
-                "statistics": {"n": n, "m": m},
+                'statistics': {'n': n, 'm': m},
             }
 
         # Calculate ApEn(m) and ApEn(m+1)
@@ -150,91 +141,87 @@ class ApproximateEntropyTest:
 
         # Prepare statistics
         stats = {
-            "n": n,
-            "m": m,
-            "chi_squared": chi_squared,
-            "phi_m": ApEn[0],
-            "phi_m_plus_1": ApEn[1],
-            "apen": apen,
-            "log2": np.log(2),
+            'n': n,
+            'm': m,
+            'chi_squared': chi_squared,
+            'phi_m': ApEn[0],
+            'phi_m_plus_1': ApEn[1],
+            'apen': apen,
+            'log2': np.log(2),
         }
 
         return {
-            "success": bool(p_value >= self.significance_level),
-            "p_value": float(p_value),
-            "statistics": stats,
+            'success': bool(p_value >= self.significance_level),
+            'p_value': float(p_value),
+            'statistics': stats,
         }
 
     def test_file(self, file_path: str | Path) -> dict:
         """Run the Approximate Entropy Test on a file"""
-        with Path.open(file_path, "rb") as f:
+        with Path.open(file_path, 'rb') as f:
             data = f.read()
         return self.test(data)
 
 
 def format_test_report(test_results: dict) -> str:
     """Format test results as a readable report"""
-    if "error" in test_results:
+    if 'error' in test_results:
         return (
-            "\n\t\t\tAPPROXIMATE ENTROPY TEST\n"
-            "\t\t--------------------------------------------\n"
-            f"ERROR: {test_results['error']}\n"
+            '\n\t\t\tAPPROXIMATE ENTROPY TEST\n'
+            '\t\t--------------------------------------------\n'
+            f'ERROR: {test_results["error"]}\n'
         )
 
-    stats = test_results["statistics"]
-    status = "SUCCESS" if test_results["success"] else "FAILURE"
+    stats = test_results['statistics']
+    status = 'SUCCESS' if test_results['success'] else 'FAILURE'
 
     report = [
-        "\n\t\t\tAPPROXIMATE ENTROPY TEST",
-        "\t\t--------------------------------------------",
-        "\t\tCOMPUTATIONAL INFORMATION:",
-        "\t\t--------------------------------------------",
-        f"\t\t(a) m (block length)    = {stats['m']}",
-        f"\t\t(b) n (sequence length) = {stats['n']}",
-        f"\t\t(c) Chi^2               = {stats['chi_squared']:.6f}",
-        f"\t\t(d) Phi(m)              = {stats['phi_m']:.6f}",
-        f"\t\t(e) Phi(m+1)            = {stats['phi_m_plus_1']:.6f}",
-        f"\t\t(f) ApEn                = {stats['apen']:.6f}",
-        f"\t\t(g) Log(2)              = {stats['log2']:.6f}",
-        "\t\t--------------------------------------------",
+        '\n\t\t\tAPPROXIMATE ENTROPY TEST',
+        '\t\t--------------------------------------------',
+        '\t\tCOMPUTATIONAL INFORMATION:',
+        '\t\t--------------------------------------------',
+        f'\t\t(a) m (block length)    = {stats["m"]}',
+        f'\t\t(b) n (sequence length) = {stats["n"]}',
+        f'\t\t(c) Chi^2               = {stats["chi_squared"]:.6f}',
+        f'\t\t(d) Phi(m)              = {stats["phi_m"]:.6f}',
+        f'\t\t(e) Phi(m+1)            = {stats["phi_m_plus_1"]:.6f}',
+        f'\t\t(f) ApEn                = {stats["apen"]:.6f}',
+        f'\t\t(g) Log(2)              = {stats["log2"]:.6f}',
+        '\t\t--------------------------------------------',
     ]
 
-    if stats["m"] > int(np.log2(stats["n"]) - 5):
+    if stats['m'] > int(np.log2(stats['n']) - 5):
         report.extend(
             [
-                f"\t\tNote: The blockSize = {stats['m']} exceeds recommended value "
-                f"of {max(1, int(np.log2(stats['n']) - 5))}",
-                "\t\tResults are inaccurate!",
-                "\t\t--------------------------------------------",
+                f'\t\tNote: The blockSize = {stats["m"]} exceeds recommended value '
+                f'of {max(1, int(np.log2(stats["n"]) - 5))}',
+                '\t\tResults are inaccurate!',
+                '\t\t--------------------------------------------',
             ]
         )
 
-    report.append(f"{status}\t\tp_value = {test_results['p_value']:.6f}\n")
+    report.append(f'{status}\t\tp_value = {test_results["p_value"]:.6f}\n')
 
-    return "\n".join(report)
+    return '\n'.join(report)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description="NIST Approximate Entropy Test")
-    parser.add_argument("file", type=str, help="Path to the binary file to test")
+    parser = argparse.ArgumentParser(description='NIST Approximate Entropy Test')
+    parser.add_argument('file', type=str, help='Path to the binary file to test')
     parser.add_argument(
-        "--block-length",
+        '--block-length',
         type=int,
         default=10,
-        help="Length m of each block (default: 10)",
+        help='Length m of each block (default: 10)',
     )
-    parser.add_argument(
-        "--alpha", type=float, default=0.01, help="Significance level (default: 0.01)"
-    )
+    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
 
     args = parser.parse_args()
 
     # Run test
-    test = ApproximateEntropyTest(
-        block_length=args.block_length, significance_level=args.alpha
-    )
+    test = ApproximateEntropyTest(block_length=args.block_length, significance_level=args.alpha)
     results = test.test_file(args.file)
 
     # Print report
