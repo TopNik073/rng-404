@@ -2,10 +2,9 @@ import datetime
 import hashlib
 import math
 import subprocess
-from http.client import HTTPException
 from typing import Final
 
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 
 import numpy as np
 
@@ -29,7 +28,7 @@ class RNG:
         self.seed: bytes | None = None
         self.counter: int = 0
 
-    async def get_random(self, params: GenerateRequestSchema, upload_file: UploadFile) -> list[str]:
+    async def get_random(self, params: GenerateRequestSchema, upload_file: UploadFile | None) -> list[str]:
         self.check_params(params)
         self.uploaded_file = upload_file
 
