@@ -96,8 +96,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     @staticmethod
     async def get_context(request: Request) -> dict[str, Any]:
         trace_id = str(uuid.uuid4())
+        content_type = request.headers.get("Content-Type", "")
         body = await request.body()
-        body = body.decode()
+        if "multipart/form-data" in content_type:
+            body = 'Not available for multipart/form-data'
+        else:
+            body = body.decode()
 
         return {
             "trace_id": trace_id,

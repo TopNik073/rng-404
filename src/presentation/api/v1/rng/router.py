@@ -1,21 +1,16 @@
 from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import StreamingResponse
 
 from src.presentation.api.v1.rng.dep import RNG_SERVICE_DEP
-from src.presentation.api.v1.rng.models import GEN_REQ_SCHEMA
+from src.presentation.api.v1.rng.models import GEN_REQ_SCHEMA, GeneratorResponseSchema
 
 rng_router = APIRouter(prefix='/rng', tags=['RNG'])
 
-@rng_router.get('/generate')
+
+@rng_router.post('/generate', response_model=GeneratorResponseSchema)
 async def rng_generator(
         rng_service: RNG_SERVICE_DEP,
         params: GEN_REQ_SCHEMA,
-):
-    return await rng_service.generate(params=params, upload_file=None)
-
-
-@rng_router.post('/generate/upload-audio')
-async def rng_generator_upload_audio(
-        rng_service: RNG_SERVICE_DEP,
-        file: UploadFile = File(...),  # noqa
-):
-    return await rng_service.upload_audio(file)
+        file: UploadFile | None = File(default=None),
+) -> GeneratorResponseSchema | StreamingResponse:
+    return await rng_service.generate(params=params, upload_file=file)

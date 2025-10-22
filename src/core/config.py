@@ -12,6 +12,8 @@ class EnvConfig(BaseSettings):
 
     DEBUG: bool = False
 
+    MAX_AUDIO_DURATION: float
+
     # ----- REDIS -----
     REDIS_HOST: str
     REDIS_PORT: int
