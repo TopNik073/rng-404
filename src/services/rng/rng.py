@@ -15,7 +15,7 @@ from src.integrations.locusonus.models import LocusonusResponseModel
 from src.presentation.api.v1.rng.models import GenerateRequestSchema
 
 SYMBOL_RATE: Final[int] = 48_000
-EXC_DURATION: Final[float] = 10.0
+EXC_DURATION: Final[float] = 1.0
 LSB_BITS: Final[int] = 8
 MIN_BASE: Final[int] = 2
 MAX_BASE: Final[int] = 36
