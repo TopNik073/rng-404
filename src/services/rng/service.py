@@ -20,13 +20,12 @@ class RngService:
             params: GenerateRequestSchema,
             upload_file: UploadFile | None
     ) -> GeneratorResponseSchema | StreamingResponse:
-        content = await upload_file.read()
         if upload_file and not upload_file.filename.endswith('.mp3'):
             raise HTTPException(400, 'Invalid file extension')
 
         if upload_file and upload_file.filename.endswith('.mp3'):
             with tempfile.NamedTemporaryFile(suffix=".mp3") as tmp:
-                tmp.write(content)
+                tmp.write(await upload_file.read())
                 tmp.seek(0)
                 audio = MP3(tmp.name)
                 duration = audio.info.length
