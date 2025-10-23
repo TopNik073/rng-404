@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.core.config import env_config, app_config
+from src.core.config import env_config
 from src.core.logger import get_logger
 from src.presentation.api import api_router
 from src.presentation.middlewares.logging import RequestLoggingMiddleware
@@ -27,7 +27,7 @@ app = FastAPI(title=env_config.APP_NAME, debug=env_config.DEBUG, lifespan=lifesp
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=app_config.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
