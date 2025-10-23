@@ -2,6 +2,7 @@
 ---
 
 # Генератор Случайных Чисел (ГСЧ) на основе Аудиопотоков
+[![Original Repository](https://img.shields.io/badge/GitHub-Original_Repo-181717?logo=github)](https://github.com/TopNik073/rng-404)
 
 ## О проекте
 
