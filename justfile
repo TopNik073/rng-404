@@ -41,3 +41,7 @@ ruff-check:
 [group('building')]
 build-local:
     docker compose -f docker-compose.local.yml up --build
+
+[group('building')]
+build-dev:
+    docker compose -f docker-compose.dev.yml up --build

@@ -1,19 +1,4 @@
 services:
-  app:
-    build: .
-    container_name: rng-back
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - LOG_FILE=/app/logs/app.log
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./logs:/app_dir/logs
-    networks:
-      - app_network
-
   redis:
     image: redis:latest
     container_name: rng-redis
