@@ -33,7 +33,11 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/topnik073/rng-404:latest
+          tags: |
+            ghcr.io/topnik073/rng-404:latest
+            ghcr.io/topnik073/rng-404:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Upload .env to server
         uses: appleboy/ssh-action@v1.0.3
@@ -67,11 +71,17 @@ jobs:
             echo "Logging into GitHub Container Registry..."
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
 
-            echo "Pulling images..."
+            echo "Pulling latest images..."
             cd /root/rng-404
             docker compose -f docker-compose.prod.yml pull
 
+            echo "Stopping and removing old containers..."
+            docker compose -f docker-compose.prod.yml down
+
             echo "Recreating containers..."
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+
+            echo "Cleaning up unused images..."
+            docker image prune -f
 
             echo "Deployment complete"
