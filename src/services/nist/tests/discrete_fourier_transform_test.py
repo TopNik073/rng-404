@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.fft import rfft
 from scipy.special import erfc
-from pathlib import Path
 
 
 class DiscreteFourierTransformTest:
@@ -105,64 +104,3 @@ class DiscreteFourierTransformTest:
             'p_value': float(p_value),
             'statistics': stats,
         }
-
-    def test_file(self, file_path: str | Path) -> dict:
-        """
-        Run the DFT Test on a file
-
-        Args:
-            file_path: Path to the file containing binary data
-
-        Returns:
-            dict: Test results (same as test() method)
-        """
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
-
-
-def format_test_report(test_results: dict) -> str:
-    """
-    Format test results as a readable report
-
-    Args:
-        test_results: Dictionary containing test results
-
-    Returns:
-        str: Formatted report
-    """
-    stats = test_results['statistics']
-
-    report = [
-        '\nDISCRETE FOURIER TRANSFORM TEST',
-        '-' * 45,
-        'COMPUTATIONAL INFORMATION:',
-        '-' * 45,
-        f'(a) Percentile      = {stats["percentile"]:.6f}',
-        f'(b) N_l            = {stats["N_l"]:.6f}',
-        f'(c) N_o            = {stats["N_o"]:.6f}',
-        f'(d) d              = {stats["d"]:.6f}',
-        f'(e) Threshold      = {stats["threshold"]:.6f}',
-        f'(f) Peaks analyzed = {stats["peaks_total"]}',
-        '-' * 45,
-        f'{"SUCCESS" if test_results["success"] else "FAILURE"}',
-        f'p_value = {test_results["p_value"]:.6f}\n',
-    ]
-
-    return '\n'.join(report)
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Discrete Fourier Transform Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = DiscreteFourierTransformTest(significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report

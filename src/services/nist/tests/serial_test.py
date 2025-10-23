@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.special import gammaincc
-from pathlib import Path
-
+from numba import jit
 
 class SerialTest:
     """
@@ -47,28 +46,8 @@ class SerialTest:
         Returns:
             float: ψ² statistic
         """
-        if m <= 0:
-            return 0.0
-
-        n = len(sequence)
-        # Initialize frequency dictionary for all possible m-bit patterns
-        pattern_counts = np.zeros(2 ** (m + 1) - 1, dtype=np.uint32)
-
-        # Count frequencies of m-bit patterns
-        for i in range(n):
-            # Get m bits starting at position i (with wraparound)
-            pattern = 1  # Start with 1 as in the C implementation
-            for j in range(m):
-                if sequence[(i + j) % n] == 0:
-                    pattern *= 2
-                else:
-                    pattern = 2 * pattern + 1
-            pattern_counts[pattern - 1] += 1
-
-        # Calculate ψ² statistic
-        # Only use counts for complete m-bit patterns (last 2^m entries)
-        relevant_counts = pattern_counts[2**m - 1 : 2 ** (m + 1) - 1]
-        return (2**m / n) * np.sum(relevant_counts**2) - n
+        seq_int32 = sequence.astype(np.int32)
+        return _psi2_jit(seq_int32, m)
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -127,61 +106,37 @@ class SerialTest:
             'statistics': stats,
         }
 
-    def test_file(self, file_path: str | Path) -> dict:
-        """Run the Serial Test on a file"""
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
 
+@jit(nopython=True, cache=True)
+def _psi2_jit(sequence, m):
+    """Calculate ψ² statistic for given pattern length m - JIT optimized"""
+    if m <= 0:
+        return 0.0
 
-def format_test_report(test_results: dict) -> str:
-    """Format test results as a readable report"""
-    if 'error' in test_results:
-        return (
-            f'\n\t\t\tSERIAL TEST\n\t\t---------------------------------------------\nERROR: {test_results["error"]}\n'
-        )
+    n = len(sequence)
+    # Initialize frequency array for all possible m-bit patterns
+    pattern_counts = np.zeros(2 ** (m + 1) - 1, dtype=np.uint32)
 
-    stats = test_results['statistics']
-    status1 = 'SUCCESS' if test_results['p_value1'] >= 0.01 else 'FAILURE'  # noqa
-    status2 = 'SUCCESS' if test_results['p_value2'] >= 0.01 else 'FAILURE'  # noqa
+    # Count frequencies of m-bit patterns
+    for i in range(n):
+        # Get m bits starting at position i (with wraparound)
+        pattern = 1  # Start with 1 as in the C implementation
+        for j in range(m):
+            idx = (i + j) % n
+            if sequence[idx] == 0:
+                pattern *= 2
+            else:
+                pattern = 2 * pattern + 1
+        pattern_counts[pattern - 1] += 1
 
-    report = [
-        '\n\t\t\tSERIAL TEST',
-        '\t\t---------------------------------------------',
-        '\t\t COMPUTATIONAL INFORMATION:',
-        '\t\t---------------------------------------------',
-        f'\t\t(a) Block length    (m) = {stats["m"]}',
-        f'\t\t(b) Sequence length (n) = {stats["n"]}',
-        f'\t\t(c) Psi_m               = {stats["psi_m"]:.6f}',
-        f'\t\t(d) Psi_m-1             = {stats["psi_m_minus_1"]:.6f}',
-        f'\t\t(e) Psi_m-2             = {stats["psi_m_minus_2"]:.6f}',
-        f'\t\t(f) Del_1               = {stats["del1"]:.6f}',
-        f'\t\t(g) Del_2               = {stats["del2"]:.6f}',
-        '\t\t---------------------------------------------',
-        f'{status1}\t\tp_value1 = {test_results["p_value1"]:.6f}',
-        f'{status2}\t\tp_value2 = {test_results["p_value2"]:.6f}\n',
-    ]
+    # Calculate ψ² statistic
+    # Only use counts for complete m-bit patterns (last 2^m entries)
+    start_idx = 2 ** m - 1
+    end_idx = 2 ** (m + 1) - 1
+    relevant_counts = pattern_counts[start_idx:end_idx]
 
-    return '\n'.join(report)
+    sum_squares = 0.0
+    for count in relevant_counts:
+        sum_squares += count * count
 
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Serial Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument(
-        '--pattern-length',
-        type=int,
-        default=16,
-        help='Length m of each pattern (default: 16)',
-    )
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = SerialTest(pattern_length=args.pattern_length, significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report
+    return (2 ** m / n) * sum_squares - n

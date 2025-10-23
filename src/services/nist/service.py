@@ -1,3 +1,4 @@
+import concurrent.futures
 from collections.abc import Mapping
 from typing import Final
 
@@ -65,19 +66,30 @@ class NistService:
 
         if upload_file is not None:
             file_sequence = await upload_file.read()
-            if not file_sequence and not sequence:
-                raise HTTPException(400, 'No sequence or file uploaded')
-            sequence = file_sequence
+
+            if isinstance(file_sequence, bytes):
+                binary_str = file_sequence.decode('utf-8').strip()
+                sequence = binary_str if all(c in '01' for c in binary_str) else file_sequence
+            else:
+                sequence = file_sequence
 
         results = {}
 
-        for test_name, test in self.tests.items():
-            test_results = test.test(sequence)
-            if 'error' in test_results:
-                logger.debug(f'Error: {test_results["error"]}')
-                test_results['success'] = False
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            future_to_name = {}
+            for name, test in self.tests.items():
+                future = executor.submit(test.test, sequence)
+                future_to_name[future] = name
 
-            results[test_name] = test_results
+            for future in concurrent.futures.as_completed(future_to_name):
+                test_name = future_to_name[future]
+                try:
+                    test_results = future.result()
+                    if 'error' in test_results:
+                        test_results['success'] = False
+                    results[test_name] = test_results
+                except Exception as e:
+                    results[test_name] = {'error': str(e), 'success': False}
 
         return self._make_json_serializable(results)
 

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import gammaincc
-from pathlib import Path
+from numba import jit
 
 
 class LinearComplexityTest:
@@ -55,36 +55,8 @@ class LinearComplexityTest:
         Returns:
             int: The linear complexity (length of the shortest LFSR) for the sequence
         """
-        n = len(block)
-        c = np.zeros(n, dtype=int)  # Connection polynomial
-        b = np.zeros(n, dtype=int)  # Previous connection polynomial
-        c[0] = 1
-        b[0] = 1
-
-        L = 0  # Length of LFSR
-        m = -1  # Index of last update
-        N = 0  # Number of bits processed
-
-        while n > N:
-            # Compute discrepancy
-            d = int(block[N])
-            for i in range(1, L + 1):
-                d ^= c[i] & block[N - i]  # XOR operation
-
-            if d == 1:  # If there is a discrepancy
-                t = c.copy()
-                for j in range(n - N + m):
-                    if b[j] == 1:
-                        c[j + N - m] ^= 1  # Update using XOR
-
-                if L <= N / 2:
-                    L = N + 1 - L
-                    m = N
-                    b = t.copy()
-
-            N += 1
-
-        return L
+        block_int32 = block.astype(np.int32)
+        return _berlekamp_massey_jit(block_int32)
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -172,64 +144,45 @@ class LinearComplexityTest:
             'statistics': stats,
         }
 
-    def test_file(self, file_path: str | Path) -> dict:
-        """Run the Linear Complexity Test on a file"""
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
 
+@jit(nopython=True, cache=True)
+def _berlekamp_massey_jit(block):
+    """
+    Implementation of the Berlekamp-Massey Algorithm - JIT optimized
 
-def format_test_report(test_results: dict) -> str:
-    """Format test results as a readable report"""
-    if 'error' in test_results:
-        return (
-            '\n\t\tLINEAR COMPLEXITY TEST\n'
-            '-----------------------------------------------------\n'
-            f'ERROR: {test_results["error"]}\n'
-        )
+    Args:
+        block: A block of bits to analyze
 
-    stats = test_results['statistics']
+    Returns:
+        int: The linear complexity (length of the shortest LFSR) for the sequence
+    """
+    n = len(block)
+    c = np.zeros(n, dtype=np.int32)  # Connection polynomial
+    b = np.zeros(n, dtype=np.int32)  # Previous connection polynomial
+    c[0] = 1
+    b[0] = 1
 
-    report = [
-        '\n-----------------------------------------------------',
-        '\tL I N E A R  C O M P L E X I T Y',
-        '-----------------------------------------------------',
-        f'\tM (substring length)     = {stats["block_size"]}',
-        f'\tN (number of substrings) = {stats["num_blocks"]}',
-        '-----------------------------------------------------',
-        '        F R E Q U E N C Y',
-        '-----------------------------------------------------',
-        '  C0   C1   C2   C3   C4   C5   C6    CHI2    P-value',
-        '-----------------------------------------------------',
-    ]
+    L = 0  # Length of LFSR
+    m = -1  # Index of last update
+    N = 0  # Number of bits processed
 
-    # Format frequencies
-    freq_str = ' '.join(f'{int(f):4d}' for f in stats['frequencies'])
-    report.append(f'{freq_str} {stats["chi_squared"]:9.6f} {test_results["p_value"]:9.6f}')
+    while n > N:
+        # Compute discrepancy
+        d = block[N]
+        for i in range(1, L + 1):
+            d ^= c[i] & block[N - i]  # XOR operation
 
-    if stats['bits_discarded'] > 0:
-        report.append(f'\tNote: {stats["bits_discarded"]} bits were discarded!')
+        if d == 1:  # If there is a discrepancy
+            t = c.copy()
+            for j in range(n - N + m):
+                if b[j] == 1:
+                    c[j + N - m] ^= 1  # Update using XOR
 
-    return '\n'.join(report)
+            if L <= N / 2:
+                L = N + 1 - L
+                m = N
+                b = t.copy()
 
+        N += 1
 
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Linear Complexity Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument(
-        '--block-size',
-        type=int,
-        default=500,
-        help='Length M of each block (default: 500)',
-    )
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = LinearComplexityTest(block_size=args.block_size, significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report
+    return L

@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from pathlib import Path
 
 
 class RandomExcursionsVariantTest:
@@ -101,63 +100,3 @@ class RandomExcursionsVariantTest:
             'p_values': float(p_values),
             'statistics': stats,
         }
-
-    def test_file(self, file_path: str | Path) -> dict:
-        """Run the Random Excursions Variant Test on a file"""
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
-
-
-def format_test_report(test_results: dict) -> str:
-    """Format test results as a readable report"""
-    if 'error' in test_results:
-        return (
-            '\n\t\t\tRANDOM EXCURSIONS VARIANT TEST\n'
-            '\t\t--------------------------------------------\n'
-            '\t\tCOMPUTATIONAL INFORMATION:\n'
-            '\t\t--------------------------------------------\n'
-            f'\t\t(a) Number Of Cycles (J) = {test_results["statistics"]["num_cycles"]}\n'
-            f'\t\t(b) Sequence Length (n)  = {test_results["statistics"]["n"]}\n'
-            '\t\t--------------------------------------------\n'
-            '\n\t\tWARNING:  TEST NOT APPLICABLE.  THERE ARE AN\n'
-            '\t\t\t  INSUFFICIENT NUMBER OF CYCLES.\n'
-            '\t\t---------------------------------------------\n'
-        )
-
-    stats = test_results['statistics']
-
-    report = [
-        '\n\t\t\tRANDOM EXCURSIONS VARIANT TEST',
-        '\t\t--------------------------------------------',
-        '\t\tCOMPUTATIONAL INFORMATION:',
-        '\t\t--------------------------------------------',
-        f'\t\t(a) Number Of Cycles (J) = {stats["num_cycles"]}',
-        f'\t\t(b) Sequence Length (n)  = {stats["n"]}',
-        '\t\t--------------------------------------------',
-    ]
-
-    for x, visits, p_value in zip(stats['states'], stats['visits'], test_results['p_values'], strict=False):
-        status = 'SUCCESS' if p_value >= 0.01 else 'FAILURE'  # noqa
-        if not (0 <= p_value <= 1):
-            report.append('\t\t(b) WARNING: P_VALUE IS OUT OF RANGE.')
-        report.append(f'{status}\t\t(x = {x:2d}) Total visits = {visits:4d}; p-value = {p_value:f}')
-
-    report.append('')
-    return '\n'.join(report)
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Random Excursions Variant Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = RandomExcursionsVariantTest(significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report

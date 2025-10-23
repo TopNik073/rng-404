@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from pathlib import Path
 
 
 class UniversalTest:
@@ -209,58 +208,3 @@ class UniversalTest:
             'p_value': float(p_value),
             'statistics': stats,
         }
-
-    def test_file(self, file_path: str | Path) -> dict:
-        """Run the Universal Statistical Test on a file"""
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
-
-
-def format_test_report(test_results: dict) -> str:
-    """Format test results as a readable report"""
-    if 'error' in test_results:
-        return (
-            '\n\t\tUNIVERSAL STATISTICAL TEST\n'
-            '\t\t--------------------------------------------\n'
-            f'\t\tERROR: {test_results["error"]}\n'
-        )
-
-    stats = test_results['statistics']
-    status = 'SUCCESS' if test_results['success'] else 'FAILURE'
-
-    report = [
-        '\n\t\tUNIVERSAL STATISTICAL TEST',
-        '\t\t--------------------------------------------',
-        '\t\tCOMPUTATIONAL INFORMATION:',
-        '\t\t--------------------------------------------',
-        f'\t\t(a) L         = {stats["L"]}',
-        f'\t\t(b) Q         = {stats["Q"]}',
-        f'\t\t(c) K         = {stats["K"]}',
-        f'\t\t(d) sum       = {stats["sum"]:.6f}',
-        f'\t\t(e) sigma     = {stats["sigma"]:.6f}',
-        f'\t\t(f) variance  = {stats["variance"]:.6f}',
-        f'\t\t(g) exp_value = {stats["expected_value"]:.6f}',
-        f'\t\t(h) phi       = {stats["phi"]:.6f}',
-        f'\t\t(i) WARNING:  {stats["bits_discarded"]} bits were discarded.',
-        '\t\t-----------------------------------------',
-        f'\t\tp_value = {test_results["p_value"]:.6f} {status}\n',
-    ]
-
-    return '\n'.join(report)
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Universal Statistical Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = UniversalTest(significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report
