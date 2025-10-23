@@ -197,7 +197,7 @@ class RNG:
         for i in range(12):
             val = (timestamp // (i + 1) + micro * (i + 3)) % len_sources
             result.add(val)
-            if len(result) >= 3:
+            if len(result) >= 3:  # noqa
                 break
 
         return list(result)[:len_sources]
