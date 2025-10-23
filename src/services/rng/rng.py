@@ -187,17 +187,20 @@ class RNG:
 
     def get_start_random_choice(self, len_sources: int) -> list[int]:
         """
-        Возвращает три случайных числа для выбора источника звука
+        Возвращает три уникальных псевдослучайных числа для выбора источника звука.
         """
         now = datetime.datetime.now()
-        microseconds = str(now.microsecond).zfill(6)
+        timestamp = int(now.timestamp() * 1_000_000)
+        micro = now.microsecond
 
-        result: list[int] = []
-        for i in range(0, 6, 2):
-            num = int(microseconds[i : i + 2])
-            result.append(num % len_sources)
+        result = set()
+        for i in range(12):
+            val = (timestamp // (i + 1) + micro * (i + 3)) % len_sources
+            result.add(val)
+            if len(result) >= 3:
+                break
 
-        return result
+        return list(result)[:len_sources]
 
     async def capture_source(self) -> bytes:
         all_entropy: bytes = b''
