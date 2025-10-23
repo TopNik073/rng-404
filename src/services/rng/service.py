@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse, Response
 
 from mutagen.mp3 import MP3
 
-from src.core.config import env_config
+from src.core.config import env_config, app_config
 from src.presentation.api.v1.rng.models import GenerateRequestSchema, GeneratorResponseSchema
 from src.services.rng.rng import RNG
 
@@ -21,8 +21,10 @@ class RngService:
     async def generate(
         self, params: GenerateRequestSchema, upload_file: UploadFile | None
     ) -> GeneratorResponseSchema | Response:
-        if upload_file and not upload_file.filename.endswith('.mp3'):
-            raise HTTPException(400, 'Invalid file extension, mp3 expected')
+        if upload_file:
+            file_extension = upload_file.filename.split('.')[-1]
+            if file_extension not in app_config.AVAILABLE_AUDIO_FORMAT:
+                raise HTTPException(400, 'Invalid file extension, mp3 expected')
 
         if upload_file and upload_file.filename.endswith('.mp3'):
             with tempfile.NamedTemporaryFile(suffix='.mp3') as tmp:

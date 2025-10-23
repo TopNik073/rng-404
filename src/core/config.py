@@ -46,6 +46,10 @@ class EnvConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
+    AVAILABLE_AUDIO_FORMAT: list[str] = [
+        '.mp3',
+        '.wav',
+    ]
     CORS_ORIGINS: list[str] = [
         'http://localhost:5173',
         'http://localhost:3000',
