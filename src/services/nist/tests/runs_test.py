@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from pathlib import Path
 
 
 class RunsTest:
@@ -88,7 +87,7 @@ class RunsTest:
         tau = 2.0 / np.sqrt(n)
 
         # For large sequences, use relaxed criteria as per NIST implementation
-        if n >= 100:  # For sequences of 100 bits or more
+        if n >= 100:  # noqa
             if abs(pi - 0.5) >= tau:
                 # Use adjusted calculation for sequences that don't meet exact 0.5 proportion
                 # But still proceed with the test using the actual pi value

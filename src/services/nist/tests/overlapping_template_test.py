@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc, gammaln
-from pathlib import Path
 
 
 class OverlappingTemplateTest:

@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.stats import norm
-from pathlib import Path
 
 
 class CumulativeSumsTest:

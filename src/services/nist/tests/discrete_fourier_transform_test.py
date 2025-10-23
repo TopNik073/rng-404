@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.fft import rfft
 from scipy.special import erfc
-from pathlib import Path
 
 
 class DiscreteFourierTransformTest:

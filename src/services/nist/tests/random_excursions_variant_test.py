@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import erfc
-from pathlib import Path
 
 
 class RandomExcursionsVariantTest:

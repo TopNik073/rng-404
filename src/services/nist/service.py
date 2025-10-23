@@ -69,10 +69,7 @@ class NistService:
 
             if isinstance(file_sequence, bytes):
                 binary_str = file_sequence.decode('utf-8').strip()
-                if all(c in '01' for c in binary_str):
-                    sequence = binary_str
-                else:
-                    sequence = file_sequence
+                sequence = binary_str if all(c in '01' for c in binary_str) else file_sequence
             else:
                 sequence = file_sequence
 

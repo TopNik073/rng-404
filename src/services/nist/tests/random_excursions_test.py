@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import gammaincc
-from pathlib import Path
 
 
 class RandomExcursionsTest:

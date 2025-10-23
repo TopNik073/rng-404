@@ -211,7 +211,7 @@ class NonOverlappingTemplateTest:
             chunk_templates = templates[chunk_start:chunk_end]
 
             # Process each template in the chunk
-            for template_idx, template in enumerate(chunk_templates, start=chunk_start):
+            for _template_idx, template in enumerate(chunk_templates, start=chunk_start):
                 seq_int32 = sequence.astype(np.int32)
                 template_int32 = template.astype(np.int32)
 
