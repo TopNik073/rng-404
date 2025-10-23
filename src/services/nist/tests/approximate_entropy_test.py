@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.special import gammaincc
-from pathlib import Path
-
+from numba import jit
 
 class ApproximateEntropyTest:
     """
@@ -49,22 +48,8 @@ class ApproximateEntropyTest:
                 frequencies: Array of pattern frequencies
                 power_len: Length of pattern array (2^block_size)
         """
-        seq_length = len(sequence)
-        # Initialize array for pattern counts
-        power_len = 2 ** (block_size + 1) - 1
-        pattern_counts = np.zeros(power_len, dtype=np.uint32)
-
-        # Count overlapping patterns
-        for i in range(seq_length):
-            # Build pattern value using bits
-            pattern = 1  # Start with 1 as in the C implementation
-            for j in range(block_size):
-                pattern <<= 1
-                if sequence[(i + j) % seq_length] == 1:
-                    pattern += 1
-            pattern_counts[pattern - 1] += 1
-
-        return pattern_counts, power_len
+        seq_int32 = sequence.astype(np.int32)
+        return _compute_frequency_jit(seq_int32, block_size)
 
     def _compute_entropy(self, frequencies: np.ndarray, seq_length: int, block_size: int) -> float:
         """
@@ -78,18 +63,7 @@ class ApproximateEntropyTest:
         Returns:
             float: Computed entropy value
         """
-        # Get frequencies for complete patterns
-        start_idx = 2**block_size - 1
-        end_idx = 2 ** (block_size + 1) - 1
-        valid_frequencies = frequencies[start_idx:end_idx]
-
-        # Compute entropy for non-zero frequencies
-        non_zero_freq = valid_frequencies[valid_frequencies > 0]
-        if len(non_zero_freq) == 0:
-            return 0.0
-
-        # Calculate entropy sum
-        return np.sum(non_zero_freq * np.log(non_zero_freq / seq_length)) / seq_length
+        return _compute_entropy_jit(frequencies, seq_length, block_size)
 
     def test(self, binary_data: str | bytes | list[int] | np.ndarray) -> dict:
         """
@@ -156,72 +130,37 @@ class ApproximateEntropyTest:
             'statistics': stats,
         }
 
-    def test_file(self, file_path: str | Path) -> dict:
-        """Run the Approximate Entropy Test on a file"""
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
+
+@jit(nopython=True, cache=True)
+def _compute_frequency_jit(sequence, block_size):
+    """Compute frequencies of all possible patterns - JIT optimized"""
+    seq_length = len(sequence)
+    power_len = 2 ** (block_size + 1) - 1
+    pattern_counts = np.zeros(power_len, dtype=np.uint32)
+
+    for i in range(seq_length):
+        pattern = 1  # Start with 1 as in the C implementation
+        for j in range(block_size):
+            pattern <<= 1
+            idx = (i + j) % seq_length
+            if sequence[idx] == 1:
+                pattern += 1
+        pattern_counts[pattern - 1] += 1
+
+    return pattern_counts, power_len
 
 
-def format_test_report(test_results: dict) -> str:
-    """Format test results as a readable report"""
-    if 'error' in test_results:
-        return (
-            '\n\t\t\tAPPROXIMATE ENTROPY TEST\n'
-            '\t\t--------------------------------------------\n'
-            f'ERROR: {test_results["error"]}\n'
-        )
+@jit(nopython=True, cache=True)
+def _compute_entropy_jit(frequencies, seq_length, block_size):
+    """Compute entropy value for given frequencies - JIT optimized"""
+    start_idx = 2 ** block_size - 1
+    end_idx = 2 ** (block_size + 1) - 1
+    valid_frequencies = frequencies[start_idx:end_idx]
 
-    stats = test_results['statistics']
-    status = 'SUCCESS' if test_results['success'] else 'FAILURE'
+    entropy_sum = 0.0
+    for freq in valid_frequencies:
+        if freq > 0:
+            ratio = freq / seq_length
+            entropy_sum += freq * np.log(ratio)
 
-    report = [
-        '\n\t\t\tAPPROXIMATE ENTROPY TEST',
-        '\t\t--------------------------------------------',
-        '\t\tCOMPUTATIONAL INFORMATION:',
-        '\t\t--------------------------------------------',
-        f'\t\t(a) m (block length)    = {stats["m"]}',
-        f'\t\t(b) n (sequence length) = {stats["n"]}',
-        f'\t\t(c) Chi^2               = {stats["chi_squared"]:.6f}',
-        f'\t\t(d) Phi(m)              = {stats["phi_m"]:.6f}',
-        f'\t\t(e) Phi(m+1)            = {stats["phi_m_plus_1"]:.6f}',
-        f'\t\t(f) ApEn                = {stats["apen"]:.6f}',
-        f'\t\t(g) Log(2)              = {stats["log2"]:.6f}',
-        '\t\t--------------------------------------------',
-    ]
-
-    if stats['m'] > int(np.log2(stats['n']) - 5):
-        report.extend(
-            [
-                f'\t\tNote: The blockSize = {stats["m"]} exceeds recommended value '
-                f'of {max(1, int(np.log2(stats["n"]) - 5))}',
-                '\t\tResults are inaccurate!',
-                '\t\t--------------------------------------------',
-            ]
-        )
-
-    report.append(f'{status}\t\tp_value = {test_results["p_value"]:.6f}\n')
-
-    return '\n'.join(report)
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Approximate Entropy Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument(
-        '--block-length',
-        type=int,
-        default=10,
-        help='Length m of each block (default: 10)',
-    )
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = ApproximateEntropyTest(block_length=args.block_length, significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report
+    return entropy_sum / seq_length

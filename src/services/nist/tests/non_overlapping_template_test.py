@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.special import gammaincc, gammaln
 from pathlib import Path
+from numba import jit
 
 
 class NonOverlappingTemplateTest:
@@ -131,28 +132,10 @@ class NonOverlappingTemplateTest:
         return pi
 
     def _count_matches(self, sequence: np.ndarray, template: np.ndarray, M: int) -> int:
-        """Count non-overlapping matches of template in sequence using vectorized operations"""
-        m = len(template)
-        # Create a view of all possible template-sized windows
-        windows = np.lib.stride_tricks.sliding_window_view(sequence[:M], m)
-        # Find matches using vectorized comparison
-        matches = np.all(windows == template, axis=1)
-        # Find indices of matches
-        match_indices = np.nonzero(matches)[0]
-
-        if len(match_indices) == 0:
-            return 0
-
-        # Count non-overlapping matches
-        count = 1
-        last_idx = match_indices[0]
-
-        for idx in match_indices[1:]:
-            if idx >= last_idx + m:
-                count += 1
-                last_idx = idx
-
-        return count
+        """Count non-overlapping matches of template in sequence using JIT optimized version"""
+        seq_int32 = sequence.astype(np.int32)
+        template_int32 = template.astype(np.int32)
+        return _count_matches_jit(seq_int32, template_int32, np.int32(M))
 
     def test(
         self,
@@ -229,13 +212,10 @@ class NonOverlappingTemplateTest:
 
             # Process each template in the chunk
             for template_idx, template in enumerate(chunk_templates, start=chunk_start):
-                # Process each block
-                W = np.zeros(N)
-                blocks = [sequence[i * M : (i + 1) * M] for i in range(N)]
+                seq_int32 = sequence.astype(np.int32)
+                template_int32 = template.astype(np.int32)
 
-                # Process blocks in parallel using numpy operations
-                for i, block in enumerate(blocks):
-                    W[i] = self._count_matches(block, template, M)
+                W = _process_blocks_jit(seq_int32, template_int32, np.int32(M), np.int32(N))
 
                 # Compute chi-square statistic χ² = Σ((Wᵢ - μ)²/σ²)
                 chi_squared = np.sum(((W - mu) ** 2) / sigma2)
@@ -245,9 +225,6 @@ class NonOverlappingTemplateTest:
                 results.append(
                     {
                         'template': template.tolist(),
-                        'template_idx': template_idx,
-                        'W': W.tolist(),
-                        'chi_squared': chi_squared,
                         'p_value': float(p_value),
                         'success': bool(p_value >= self.significance_level),
                     }
@@ -271,70 +248,36 @@ class NonOverlappingTemplateTest:
             'statistics': stats,
         }
 
-    def test_file(self, file_path: str | Path, templates_dir: str | None = None) -> dict:
-        """Run the Non-overlapping Template Test on a file"""
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data, templates_dir)
 
+@jit(nopython=True, cache=True)
+def _count_matches_jit(sequence, template, M):
+    """Count non-overlapping matches of template in sequence - JIT optimized version"""
+    m = len(template)
+    count = 0
+    i = 0
 
-def format_test_report(test_results: dict) -> str:
-    """Format test results as a readable report"""
-    if 'error' in test_results:
-        return '\nNON-OVERLAPPING TEMPLATE TEST\n' + '-' * 45 + '\n' + f'ERROR: {test_results["error"]}\n'
+    while i <= M - m:
+        match = True
+        for j in range(m):
+            if sequence[i + j] != template[j]:
+                match = False
+                break
 
-    stats = test_results['statistics']
+        if match:
+            count += 1
+            i += m  # Skip ahead by template length for non-overlapping
+        else:
+            i += 1
 
-    report = [
-        '\nNON-OVERLAPPING TEMPLATE TEST',
-        '-' * 75,
-        'COMPUTATIONAL INFORMATION:',
-        '-' * 75,
-        f'LAMBDA = {stats["lambda"]:.6f}',
-        f'M (block length) = {stats["M"]}',
-        f'N (number of blocks) = {stats["N"]}',
-        f'm (template length) = {stats["template_length"]}',
-        f'n (sequence length) = {stats["n"]}',
-        '-' * 75,
-        '                F R E Q U E N C Y',
-        'Template  W_1  W_2  W_3  W_4  W_5  W_6  W_7  W_8    Chi^2   P-value Result  Index',
-    ]
+    return count
 
-    for result in test_results['results']:
-        template_str = ''.join(map(str, result['template']))
-        W_str = ' '.join(f'{w:3d}' for w in result['W'])
-        status = 'SUCCESS' if result['success'] else 'FAILURE'
-
-        report.append(
-            f'{template_str} {W_str}  {result["chi_squared"]:7.4f} {result["p_value"]:.6f} {status:7} {result["template_idx"]:4d}'
-        )
-
-    return '\n'.join(report)
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Non-overlapping Template Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument(
-        '--template-length',
-        type=int,
-        default=9,
-        help='Length of templates to test (2-21, default: 9)',
-    )
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-    parser.add_argument(
-        '--templates-dir',
-        type=str,
-        default='templates',
-        help='Directory containing template files',
-    )
-
-    args = parser.parse_args()
-
-    # Run test
-    test = NonOverlappingTemplateTest(template_length=args.template_length, significance_level=args.alpha)
-    results = test.test_file(args.file, args.templates_dir)
-
-    # Print report
+@jit(nopython=True, cache=True)
+def _process_blocks_jit(sequence, template, M, N):
+    """Process all blocks and count matches - JIT optimized"""
+    W = np.zeros(N, dtype=np.float64)
+    for i in range(N):
+        start_idx = i * M
+        end_idx = (i + 1) * M
+        block = sequence[start_idx:end_idx]
+        W[i] = _count_matches_jit(block, template, M)
+    return W

@@ -94,7 +94,6 @@ class BlockFrequencyTest:
             'num_blocks': N,
             'discarded_bits': discarded_bits,
             'chi_squared': chi_squared,
-            'block_frequencies': pi.tolist(),  # Convert to list for JSON serialization
         }
 
         return {
@@ -102,64 +101,3 @@ class BlockFrequencyTest:
             'p_value': float(p_value),
             'statistics': stats,
         }
-
-    def test_file(self, file_path: str | Path) -> dict:
-        """
-        Run the Block Frequency Test on a file
-
-        Args:
-            file_path: Path to the file containing binary data
-
-        Returns:
-            dict: Test results (same as test() method)
-        """
-        with Path.open(file_path, 'rb') as f:
-            data = f.read()
-        return self.test(data)
-
-
-def format_test_report(test_results: dict) -> str:
-    """
-    Format test results as a readable report
-
-    Args:
-        test_results: Dictionary containing test results
-
-    Returns:
-        str: Formatted report
-    """
-    stats = test_results['statistics']
-
-    report = [
-        'BLOCK FREQUENCY TEST',
-        '-' * 45,
-        'COMPUTATIONAL INFORMATION:',
-        '-' * 45,
-        f'(a) Chi^2             = {stats["chi_squared"]:.6f}',
-        f'(b) # of blocks       = {stats["num_blocks"]}',
-        f'(c) Block length      = {stats["block_size"]}',
-        f'(d) Sequence length   = {stats["n"]}',
-        f'(e) Discarded bits    = {stats["discarded_bits"]}',
-        '-' * 45,
-        'SUCCESS' if test_results['success'] else 'FAILURE',
-        f'p_value = {test_results["p_value"]:.6f}\n',
-    ]
-
-    return '\n'.join(report)
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description='NIST Block Frequency Test')
-    parser.add_argument('file', type=str, help='Path to the binary file to test')
-    parser.add_argument('--block-size', type=int, default=128, help='Size of each block (default: 128)')
-    parser.add_argument('--alpha', type=float, default=0.01, help='Significance level (default: 0.01)')
-
-    args = parser.parse_args()
-
-    # Run test
-    test = BlockFrequencyTest(block_size=args.block_size, significance_level=args.alpha)
-    results = test.test_file(args.file)
-
-    # Print report
