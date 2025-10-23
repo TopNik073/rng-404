@@ -48,6 +48,7 @@ class EnvConfig(BaseSettings):
 class AppConfig(BaseSettings):
     CORS_ORIGINS: list[str] = [
         'http://localhost:5173',
+        'http://localhost:3000',
         'http://62.217.177.201',
         'https://404-team.ru',
     ]
